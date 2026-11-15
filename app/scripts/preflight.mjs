@@ -152,19 +152,24 @@ async function main() {
   if (!smokeBase) {
     note('live site check', 'no production URL yet, so this is the first deployment');
   } else {
-    console.log(`\nchecking the live site at ${smokeBase}`);
-    try {
-      const { runSmoke } = await import('./smoke.mjs');
-      const result = await runSmoke({
-        base: smokeBase,
-        adminKey: process.env.ADMIN_KEY || '',
-      });
-      if (!result.ok) {
-        if (process.env.SMOKE_STRICT === '1') fail('live site', 'the checks above found problems');
-        else note('live site', 'problems found, but not fatal — fix forward with another deploy');
+    const reachable = await fetch(`${smokeBase}/healthz`, { signal: AbortSignal.timeout(10000) })
+      .then((r) => r.ok)
+      .catch(() => false);
+
+    if (!reachable) {
+      console.log(`\nno live deployment at ${smokeBase} yet — nothing to compare this build against`);
+    } else {
+      console.log(`\nchecking the live site at ${smokeBase}`);
+      try {
+        const { runSmoke } = await import('./smoke.mjs');
+        const result = await runSmoke({ base: smokeBase, adminKey: process.env.ADMIN_KEY || '' });
+        if (!result.ok) {
+          if (process.env.SMOKE_STRICT === '1') fail('live site', 'the checks above found problems');
+          else note('live site', 'problems found, but not fatal — fix forward with another deploy');
+        }
+      } catch (err) {
+        note('live site check', `could not run — ${err.message}`);
       }
-    } catch (err) {
-      note('live site check', `could not run — ${err.message}`);
     }
   }
 
