@@ -1,0 +1,9 @@
+{
+  "name": "gsa-certificate-site",
+  "private": true,
+  "type": "module",
+  "description": "Deploy entry for the certificate site in app/. The app itself has no dependencies.",
+  "engines": {
+    "node": ">=20"
+  }
+}

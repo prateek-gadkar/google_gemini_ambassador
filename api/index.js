@@ -1,10 +1,10 @@
-// Vercel entry point.
+// Vercel entry point (repository root, so a plain git import needs no settings).
 //
-// The app is a plain Node request handler, so the function just boots the same
-// server the CLI uses and forwards to it. Storage comes from SUPABASE_URL /
-// SUPABASE_SERVICE_KEY when they are set; without them this would fall back to
-// a local file, which a serverless host wipes.
-import { createServer } from '../server.js';
+// The app is a plain Node request handler, so this function just boots the same
+// server the CLI runs and forwards to it. Storage comes from SUPABASE_URL /
+// SUPABASE_SERVICE_KEY when they are set; without them this falls back to a
+// local file, which a serverless host wipes between requests.
+import { createServer } from '../app/server.js';
 
 let booting;
 
