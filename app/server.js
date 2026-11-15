@@ -102,6 +102,29 @@ function publicStudent(student) {
   };
 }
 
+/**
+ * Read a signature supplied as base64, with or without a `data:` prefix.
+ * Returns null for anything that is not really a PNG or JPEG, so a bad paste
+ * fails loudly at boot instead of producing a broken certificate later.
+ */
+function parseSignatureValue(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  const match = /^data:image\/(png|jpe?g);base64,(.+)$/is.exec(text);
+  const base64 = (match ? match[2] : text).replace(/\s+/g, '');
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64) || base64.length < 64) return null;
+  const raw = Buffer.from(base64, 'base64');
+  if (raw.length < 64) return null;
+  const isPng = raw[0] === 0x89 && raw[1] === 0x50 && raw[2] === 0x4e && raw[3] === 0x47;
+  const isJpeg = raw[0] === 0xff && raw[1] === 0xd8 && raw[2] === 0xff;
+  if (!isPng && !isJpeg) return null;
+  return {
+    raw,
+    mime: isPng ? 'image/png' : 'image/jpeg',
+    ext: isPng ? 'png' : 'jpg',
+  };
+}
+
 function certView(store) {
   const cfg = store.read((d) => d.certConfig);
   const templateReady = !!(cfg.templateFile && cfg.templateReady);
@@ -219,6 +242,31 @@ export async function createServer(options = {}) {
     await store.mutate((data) => {
       data.certConfig.signatureFile = signature;
     });
+  }
+
+  // A hosted filesystem is wiped on every deploy and a signature is a personal
+  // artifact, so it can live neither on disk nor in a public repo. If it comes
+  // in through the environment, adopt it into the document once — after that the
+  // database carries it and the variable is only ever a seed.
+  const seededSignature = options.signatureDataUri || process.env.SIGNATURE_DATA_URI || '';
+  if (seededSignature && !store.read((d) => d.certConfig.signatureData)) {
+    const parsed = parseSignatureValue(seededSignature);
+    if (!parsed) {
+      console.error(
+        'WARNING: SIGNATURE_DATA_URI is set but is not base64 PNG or JPEG data. ' +
+          'Ignoring it — the site will ask for a signature upload instead.'
+      );
+    } else {
+      const filename = `signature.${parsed.ext}`;
+      await fs.writeFile(path.join(assetsDir, filename), parsed.raw).catch((err) => {
+        console.error(`could not write the seeded signature to disk: ${err.message}`);
+      });
+      await store.mutate((data) => {
+        data.certConfig.signatureFile = filename;
+        data.certConfig.signatureData = `data:${parsed.mime};base64,${parsed.raw.toString('base64')}`;
+      });
+      console.log(`signature adopted from SIGNATURE_DATA_URI (${parsed.raw.length} bytes)`);
+    }
   }
 
   const limitRegister = makeRateLimiter(

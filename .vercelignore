@@ -5,7 +5,6 @@ promo
 .review
 app/test
 app/data
-app/scripts
 app/api
 node_modules
 

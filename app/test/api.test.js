@@ -702,3 +702,50 @@ test('an admin can remove a registration, and nobody else can', async () => {
     assert.equal(list.body.stats.total, 0, 'the roster is back to empty');
   });
 });
+
+// ---------------------------------------------------------------------------
+test('a signature supplied through the environment is adopted, so a hosted deploy needs no upload', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-data-'));
+  const assetsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-assets-'));
+  const uri = `data:image/png;base64,${TINY_PNG.toString('base64')}`;
+  const { server } = await createServer({ dataDir, assetsDir, adminKey: ADMIN_KEY, signatureDataUri: uri });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const me = await (await fetch(base + '/api/me')).json();
+    assert.equal(me.cert.signatureReady, true, 'the signature counts as present');
+    assert.equal(me.cert.signatureUrl, '/assets/signature.png');
+    assert.ok(fs.existsSync(path.join(assetsDir, 'signature.png')), 'and it is on disk for the renderer');
+    const served = await fetch(base + '/assets/signature.png');
+    assert.equal(served.status, 200, 'the browser can fetch it');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('a signature that is not really an image is refused instead of trusted', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-data-'));
+  const assetsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-assets-'));
+  const original = console.error;
+  const lines = [];
+  console.error = (...args) => lines.push(args.join(' '));
+  let server;
+  try {
+    const started = await createServer({
+      dataDir,
+      assetsDir,
+      adminKey: ADMIN_KEY,
+      // Base64 of plain text, which is the shape a wrong paste takes.
+      signatureDataUri: Buffer.from('this is not an image, it is a sentence').toString('base64'),
+    });
+    server = started.server;
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const me = await (await fetch(base + '/api/me')).json();
+    assert.equal(me.cert.signatureReady, false, 'a bad value must not unlock certificates');
+    assert.match(lines.join('\n'), /SIGNATURE_DATA_URI/);
+  } finally {
+    console.error = original;
+    if (server) await new Promise((resolve) => server.close(resolve));
+  }
+});
