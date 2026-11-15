@@ -55,6 +55,18 @@ Reply "IN" and I'll send the link.
 
 ---
 
+## What is Google Play Arena — your 0:10 minutes
+
+Say it as a story, not a spec sheet.
+
+- **What:** India's mobile esports championship, from Google Play and NODWIN Gaming. Free to enter.
+- **Games (6):** BGMI · Free Fire Max · Real Cricket · Moba Legends 5v5 · Chess · EA SPORTS FC Mobile
+- **Clubs (6):** Mahi Clutchers (yes, MS Dhoni leads it) · GodLike Esports · Team S8UL · Orangutan Gaming · Revenant XSpark · Team Apex Gaming
+- **Timeline:** registrations until **29 Nov** → qualifiers 31 Oct–12 Dec → **Grand Finale, live in Mumbai, 19–20 Dec**
+- **Register:** `goo.gle/GooglePlayArena-StudentAmbassadors`
+
+> **Registrations close 29 November** — a day before your task deadline. And a Best Entry only counts if that participant is registered. So get everyone signed up *on the call*, not "later".
+
 ## What participants produce
 
 Three artefacts, per participant. All three links get collected:
@@ -144,19 +156,27 @@ Strict rules:
 
 ## Best Entry rubric
 
-Score each nominee 1–5 on:
+These are the four criteria the programme actually evaluates. Score each nominee 1–5.
 
 | Criterion | What you're looking for |
 |-----------|------------------------|
-| Originality | Would I remember this tomorrow? Penalise rebel-robot / rescue-the-city defaults. |
-| Mission clarity | One goal, one enemy, expressible in a sentence. |
-| Poster craft | Striking, zero text, zero weapons. |
-| Pitch delivery | 60 seconds, told as a story, finished on time. |
-| Would players drop in | Honest room-vote energy. |
+| **Playability & originality** | Is it a game someone would play? Is the idea actually new? |
+| **Mission & enemy strength** | One goal, one enemy, one deadline. Is the enemy a real obstacle, or just set dressing? |
+| **Centrality of Gemini** | Did Gemini shape the output, or was it decoration? If you deleted the chat link, would the entry still make sense? |
+| **Poster quality** | Positive, campus-friendly, and **zero text in the visual**. |
 
-**Tie-break:** the entry with all three artefacts complete and linkable.
+**Tie-break:** all three artefacts (Gemini chat + Doc + poster) complete and linkable, and the participant is registered on Google Play Arena.
 
 Nominations are manually reviewed. Don't nominate a friend's half-finished entry.
+
+### Reference entries
+
+The official deck shows two examples of what "good" looks like — use them if the room freezes:
+
+- **VAULT RUNNERS** — *"Every campus hides a secret."* Uncover a vault beneath the college library before the semester ends. Enemy: the Archivist, a clockwork guardian who rearranges the shelves to trap you. Duo co-op or solo, 10-minute levels. Puzzles use real campus landmarks.
+- **ECHO PROTOCOL** — *"Silence is the loudest signal."* Escape a doomed space station carrying the one signal that can save home. Enemy: the Static, a swarm of rebel robots jamming every door and map. Squad of 4, 12-minute rounds.
+
+Notice what makes them work: **specific**, campus-or-world grounded, and the enemy creates the pressure.
 
 ---
 

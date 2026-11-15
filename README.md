@@ -86,10 +86,17 @@ The full list is in the **🚫 Void rules** tab. Worth five minutes.
 
 ```
 dashboard/index.html          the command center — open this
+WHATS-POSSIBLE.md             everything else I can build, and what I can't do
 playbooks/01-game-on-night.md  host sheet, printable, run it live from this
 playbooks/02-squad-up-reel.md  shot list + captions for your phone
 playbooks/03-study-notebooks.md full interview script + participant log
 ```
+
+Your GID (**13597**) is already loaded, so captions and prompts come out ready to paste. Campus name is still blank — add it in the dashboard, or send it over.
+
+### Don't miss this one
+
+**Google Play Arena registrations close 29 November** — a day before the task deadline. A Best Entry only counts if that participant is registered, so the room has to sign up on the call, not "later". Register at `goo.gle/GooglePlayArena-StudentAmbassadors`. There's a check on your calendar for 27 Nov.
 
 ---
 
