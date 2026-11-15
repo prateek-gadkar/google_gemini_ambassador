@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your certificate</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <strong>Your certificate</strong>
+        <span id="certStatus">Preparing...</span>
+      </div>
+    </div>
+    <a href="/" class="row"><button class="ghost small" type="button">Back</button></a>
+  </header>
+
+  <div id="certMsg" class="banner hidden"></div>
+
+  <div class="card" id="previewCard">
+    <canvas id="canvas" width="1200" height="848"></canvas>
+  </div>
+
+  <div class="row" style="margin-bottom:12px">
+    <button class="primary" id="btnDownload" type="button" disabled>Download certificate</button>
+    <span class="tiny" id="certMeta"></span>
+  </div>
+
+  <p class="tiny">
+    The image is generated in your browser from the official artwork. If the print looks
+    wrong, tell the organiser rather than editing it yourself.
+  </p>
+</div>
+<script src="/cert-render.js"></script>
+<script src="/cert.js"></script>
+</body>
+</html>

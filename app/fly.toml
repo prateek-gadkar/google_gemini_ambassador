@@ -1,0 +1,42 @@
+# Fly.io config for the Certificate Station.
+#
+#   cd app
+#   fly launch --no-deploy --copy-config      # or: fly apps create <name>
+#   fly volumes create data --size 1 --region bom
+#   fly secrets set ADMIN_KEY="$(openssl rand -base64 18)"
+#   fly deploy
+#
+# The volume is what keeps registrations across deploys. Without it the
+# container filesystem is replaced on every release.
+
+app = "certificate-station"
+primary_region = "bom"      # Mumbai
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  DATA_DIR = "/var/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/healthz"
+
+[[mounts]]
+  source = "data"
+  destination = "/var/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

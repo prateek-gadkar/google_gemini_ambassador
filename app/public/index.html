@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Certificate Station</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <strong id="siteName">Certificate Station</strong>
+        <span id="siteTagline">Complete every required task, then collect your certificate.</span>
+      </div>
+    </div>
+    <button class="ghost small hidden" id="btnSignOut">Sign out</button>
+  </header>
+
+  <!-- ---------- signed out ---------- -->
+  <section id="signedOut" class="hidden">
+    <h1>Register for your certificate</h1>
+    <p class="lede">
+      Sign up with the same name and email you use for the session. You will be able to
+      download your certificate once every required task is done.
+    </p>
+
+    <form class="card" id="formRegister" autocomplete="on">
+      <label class="field">
+        <span>Full name, as it should appear on the certificate</span>
+        <input type="text" id="regName" name="name" required maxlength="80" autocomplete="name" placeholder="e.g. Ananya Sharma">
+      </label>
+      <label class="field">
+        <span>Email address</span>
+        <input type="email" id="regEmail" name="email" required maxlength="120" autocomplete="email" placeholder="you@campus.edu">
+      </label>
+      <label class="field">
+        <span>Campus <span class="tiny">(optional)</span></span>
+        <input type="text" id="regCampus" name="campus" maxlength="80" placeholder="Your college">
+      </label>
+      <div class="row">
+        <button class="primary" type="submit" id="btnRegister">Register</button>
+        <button class="ghost" type="button" id="btnShowLogin">Already registered</button>
+      </div>
+      <div class="msg" id="regMsg"></div>
+    </form>
+
+    <form class="card hidden" id="formLogin" autocomplete="on">
+      <h2>Sign in</h2>
+      <label class="field">
+        <span>Email address you registered with</span>
+        <input type="email" id="loginEmail" name="email" required maxlength="120" autocomplete="email">
+      </label>
+      <div class="row">
+        <button class="primary" type="submit" id="btnLogin">Sign in</button>
+        <button class="ghost" type="button" id="btnShowRegister">Back to register</button>
+      </div>
+      <div class="msg" id="loginMsg"></div>
+    </form>
+  </section>
+
+  <!-- ---------- signed in ---------- -->
+  <section id="signedIn" class="hidden">
+    <h1 id="greeting">Hey there</h1>
+    <p class="lede" id="subGreeting"></p>
+
+    <div id="gateBanner" class="banner"></div>
+
+    <h2>Your tasks</h2>
+    <div id="taskList"></div>
+
+    <div class="card" id="certCard">
+      <h2>Your certificate</h2>
+      <div id="certBody"></div>
+    </div>
+
+    <footer class="foot">
+      Signed in as <span id="footEmail" class="mono"></span>.
+      Your name on the certificate is <b id="footName"></b> &mdash; ask the organiser if it needs correcting.
+    </footer>
+  </section>
+
+</div>
+<script src="/student.js"></script>
+</body>
+</html>

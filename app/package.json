@@ -1,0 +1,14 @@
+{
+  "name": "certificate-station",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Task-gated certificate distribution for a campus session. No dependencies.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  }
+}

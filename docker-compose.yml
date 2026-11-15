@@ -1,0 +1,26 @@
+# Self-hosting on any VPS, or running the exact production shape locally:
+#
+#   ADMIN_KEY="choose-something" docker compose up -d --build
+#
+# Registrations live in ./data on the host, not inside the container, so a
+# rebuild or a restart cannot lose them.
+
+services:
+  certificate-station:
+    build: ./app
+    image: certificate-station
+    container_name: certificate-station
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATA_DIR: /var/data
+      NODE_ENV: production
+      ADMIN_KEY: ${ADMIN_KEY:?set ADMIN_KEY, e.g. ADMIN_KEY="$(openssl rand -base64 18)" docker compose up -d}
+    volumes:
+      - ./data:/var/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

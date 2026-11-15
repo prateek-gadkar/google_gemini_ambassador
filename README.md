@@ -86,13 +86,46 @@ The full list is in the **🚫 Void rules** tab. Worth five minutes.
 
 ```
 dashboard/index.html          the command center — open this
-WHATS-POSSIBLE.md             everything else I can build, and what I can't do
+dashboard/timer.html          full-screen 60-minute session timer
+app/                          the Certificate Station website — see app/README.md
 playbooks/01-game-on-night.md  host sheet, printable, run it live from this
 playbooks/02-squad-up-reel.md  shot list + captions for your phone
 playbooks/03-study-notebooks.md full interview script + participant log
+playbooks/04-crib-sheet.md     what to say on each slide of the official deck
+promo/promo-pack.md           invites, Hinglish variants, faculty email, nudges
+WHATS-POSSIBLE.md             everything else I can build, and what I can't do
 ```
 
 Your GID (**13597**) is already loaded, so captions and prompts come out ready to paste. Campus name is still blank — add it in the dashboard, or send it over.
+
+## The Certificate Station website
+
+`app/` is a working multi-user site: students register, submit a receipt for each
+required task, and the certificate unlocks only when every required task is in.
+They then type their name and download it.
+
+```bash
+cd app
+npm start        # http://localhost:8080 — prints the admin key on boot
+npm test         # 27 checks incl. a 70-student concurrency run
+```
+
+Three things about it are deliberate:
+
+1. **It adds nothing to the official artwork.** The certificate image already
+   carries all the wording, so the app writes only the three blanks the template
+   leaves open: the name, today's date, and your signature. Their positions were
+   measured off the artwork, not guessed.
+2. **The gate is enforced server-side**, not hidden in the page. Submitting one
+   of two tasks still returns `403`. Rejecting a task re-locks the certificate
+   and revokes an issued one. And no certificate is issued at all until both the
+   artwork and your signature are in place — an unsigned certificate is not a
+   certificate.
+3. **You still choose two things:** your signature image, and the date format.
+   Then drag the fields into place on the calibration screen and press enable.
+
+Full setup and operations: [`app/README.md`](app/README.md).
+Getting it onto a real URL **for free**: [`DEPLOY.md`](DEPLOY.md) — or just `cd app && ./scripts/share.sh`.
 
 ### Don't miss this one
 

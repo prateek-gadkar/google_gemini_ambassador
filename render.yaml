@@ -1,0 +1,34 @@
+# Render blueprint for the Certificate Station.
+#
+# In Render: New + > Blueprint > pick this repository > Apply.
+# Everything below is then created for you, including the admin key, which
+# appears in the service's Environment tab.
+#
+# WHY "starter" AND NOT THE FREE PLAN:
+# the free plan has no persistent disk and sleeps after 15 minutes idle. This
+# app keeps every registration in a JSON file on disk, so on the free plan the
+# data would be wiped on each deploy and lost on restart. A $7/month instance
+# with a 1 GB disk is the smallest setup where registrations survive.
+
+services:
+  - type: web
+    name: certificate-station
+    runtime: docker
+    plan: starter
+    region: singapore          # closest Render region to India
+    dockerContext: ./app
+    dockerfilePath: ./app/Dockerfile
+    healthCheckPath: /healthz
+    autoDeploy: true
+    disk:
+      name: certificate-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+      - key: NODE_ENV
+        value: production
+      # Generated once and kept. Read it from the dashboard to open /admin.
+      - key: ADMIN_KEY
+        generateValue: true

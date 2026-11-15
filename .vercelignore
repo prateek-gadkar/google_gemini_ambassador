@@ -1,0 +1,13 @@
+# Nothing here is needed to serve the certificate site.
+dashboard
+playbooks
+promo
+.review
+app/test
+app/data
+app/api
+node_modules
+
+# Never ship the signature as a loose file; it is uploaded to the running app.
+app/public/assets/signature.png
+app/public/assets/signature.jpg
