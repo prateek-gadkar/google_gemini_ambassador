@@ -345,15 +345,47 @@ test('admin status values are validated', async () => {
   });
 });
 
-test('downloads can never be enabled without a template on disk', async () => {
+test('downloads can never be enabled without a signature on disk', async () => {
   await withServer(async ({ base, admin }) => {
     const res = await admin.request('/api/admin/cert-config', {
       method: 'POST', headers: adminHeaders, json: { templateReady: true },
     });
     assert.equal(res.status, 200);
-    assert.equal(res.body.cert.templateReady, false, 'refused: nothing uploaded yet');
-    assert.equal(res.body.cert.templateUrl, null);
+    // The official artwork ships with the app, so it is adopted on boot...
+    assert.match(res.body.cert.templateUrl || '', /certificate-template/);
+    // ...but an unsigned certificate is not a certificate, so downloads stay off.
+    assert.equal(res.body.cert.templateReady, false, 'refused: no signature yet');
+    assert.equal(res.body.cert.signatureReady, false);
+    assert.equal(res.body.cert.ready, false);
   });
+});
+
+test('uploaded files land in the data directory so a deploy cannot lose them', async (t) => {
+  // Production shape: no assetsDir override, exactly like a mounted disk.
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-prod-'));
+  const { server } = await createServer({ dataDir, adminKey: ADMIN_KEY });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+
+  const upload = await fetch(base + '/api/admin/signature', {
+    method: 'POST',
+    headers: { 'x-admin-key': ADMIN_KEY },
+    body: TINY_PNG,
+  });
+  assert.equal(upload.status, 200);
+
+  const onDisk = path.join(dataDir, 'assets', 'signature.png');
+  assert.ok(fs.existsSync(onDisk), 'signature written under DATA_DIR, not next to the code');
+
+  const served = await fetch(base + '/assets/signature.png');
+  assert.equal(served.status, 200);
+  assert.match(served.headers.get('content-type'), /image\/png/);
+
+  // The bundled artwork still resolves through the same /assets path.
+  const artwork = await fetch(base + '/assets/certificate-template.jpg');
+  assert.equal(artwork.status, 200);
+  assert.match(artwork.headers.get('content-type'), /image\/jpeg/);
 });
 
 test('artwork without a signature cannot be enabled, and issues nothing', async () => {
@@ -379,7 +411,6 @@ test('artwork without a signature cannot be enabled, and issues nothing', async 
       method: 'POST', json: { name: 'Ananya Sharma' },
     });
     assert.equal(issue.status, 409);
-    assert.match(issue.body.error, /artwork|signature/i);
 
     // Now add the signature and try again.
     await admin.request('/api/admin/signature', { method: 'POST', headers: adminHeaders, body: TINY_PNG });

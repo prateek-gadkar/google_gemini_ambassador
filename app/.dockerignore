@@ -1,4 +1,7 @@
+# Student data never enters an image.
 data
-public/assets/certificate-template.*
+# The signature is personal and is uploaded at runtime, onto the mounted disk.
+public/assets/signature.*
 test
 node_modules
+*.tmp

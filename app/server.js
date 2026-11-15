@@ -18,7 +18,7 @@ import { sendJson, sendText, readJson, readBody, serveStatic } from './lib/http.
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, 'public');
-const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
+const BUNDLED_ASSETS = path.join(PUBLIC_DIR, 'assets');
 
 const MAX_PROOF_BYTES = 4 * 1024 * 1024;
 const MAX_TEMPLATE_BYTES = 12 * 1024 * 1024;
@@ -142,8 +142,11 @@ function makeRateLimiter(limit, windowMs) {
 }
 
 export async function createServer(options = {}) {
-  const dataDir = options.dataDir || path.join(HERE, 'data');
-  const assetsDir = options.assetsDir || ASSETS_DIR;
+  // DATA_DIR lets a host mount a persistent disk (Render, Fly, a VPS) without
+  // touching the code. Uploaded files go here, not next to the code, because
+  // the container filesystem is usually wiped on every deploy.
+  const dataDir = options.dataDir || process.env.DATA_DIR || path.join(HERE, 'data');
+  const assetsDir = options.assetsDir || path.join(dataDir, 'assets');
   const adminKey = options.adminKey || process.env.ADMIN_KEY || null;
 
   await fs.mkdir(dataDir, { recursive: true });
@@ -164,34 +167,32 @@ export async function createServer(options = {}) {
   // The official artwork ships with the app, so adopt it on first boot rather
   // than making the organiser upload a file they already have. The signature is
   // personal and is never shipped: it must be uploaded deliberately.
-  for (const ext of ['jpg', 'png']) {
-    const candidate = `certificate-template.${ext}`;
-    const exists = await fs
-      .stat(path.join(assetsDir, candidate))
-      .then(() => true)
-      .catch(() => false);
-    if (!exists) continue;
-    const current = store.read((d) => d.certConfig.templateFile);
-    if (!current) {
-      await store.mutate((data) => {
-        data.certConfig.templateFile = candidate;
-      });
+  const assetsSearchPath = [assetsDir, BUNDLED_ASSETS];
+
+  async function findAsset(basename) {
+    for (const dir of assetsSearchPath) {
+      const found = await fs
+        .stat(path.join(dir, basename))
+        .then(() => true)
+        .catch(() => false);
+      if (found) return basename;
     }
-    break;
+    return null;
   }
-  for (const ext of ['png', 'jpg']) {
-    const candidate = `signature.${ext}`;
-    const exists = await fs
-      .stat(path.join(assetsDir, candidate))
-      .then(() => true)
-      .catch(() => false);
-    if (!exists) continue;
-    if (!store.read((d) => d.certConfig.signatureFile)) {
-      await store.mutate((data) => {
-        data.certConfig.signatureFile = candidate;
-      });
-    }
-    break;
+
+  const artwork = (await findAsset('certificate-template.jpg')) ||
+    (await findAsset('certificate-template.png'));
+  if (artwork && !store.read((d) => d.certConfig.templateFile)) {
+    await store.mutate((data) => {
+      data.certConfig.templateFile = artwork;
+    });
+  }
+
+  const signature = (await findAsset('signature.png')) || (await findAsset('signature.jpg'));
+  if (signature && !store.read((d) => d.certConfig.signatureFile)) {
+    await store.mutate((data) => {
+      data.certConfig.signatureFile = signature;
+    });
   }
 
   const limitRegister = makeRateLimiter(
@@ -234,6 +235,10 @@ export async function createServer(options = {}) {
     const method = req.method || 'GET';
 
     // ---- student account ---------------------------------------------------
+    if (route === '/healthz' && method === 'GET') {
+      return sendJson(res, 200, { ok: true });
+    }
+
     if (route === '/api/health' && method === 'GET') {
       return sendJson(res, 200, {
         ok: true,

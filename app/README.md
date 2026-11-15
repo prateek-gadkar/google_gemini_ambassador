@@ -165,14 +165,28 @@ The rate limiter is a flood guard at 240 requests per 10 minutes per IP, on
 purpose: a whole campus usually shares one public IP, and a tighter limit would
 lock out the room. This was caught by the load test before shipping.
 
-## Moving it to real hosting
+## Putting it on the real internet
 
-`npm start` with `PORT` set is enough for any Node host. A `Dockerfile` is
-included; mount `/app/data` as a volume:
+See [`../DEPLOY.md`](../DEPLOY.md) for the full walkthrough. In short, this is a
+long-running Node process that keeps state on disk, so it needs a host with a
+persistent disk — not a serverless platform.
 
 ```bash
-docker run -p 8080:8080 -v $PWD/app/data:/app/data -e ADMIN_KEY=choose-something certificate-station
+docker run -p 8080:8080 -v $PWD/data:/var/data \
+  -e DATA_DIR=/var/data -e ADMIN_KEY=choose-something certificate-station
 ```
+
+Deployment configs are in the repo already: `render.yaml` (blueprint),
+`app/fly.toml` (volume-based), and `docker-compose.yml` (any VPS).
+
+Two environment variables matter:
+
+| Variable | Why |
+| --- | --- |
+| `DATA_DIR` | Where registrations and uploads live. Point it at the mounted disk or data is lost on every deploy. |
+| `ADMIN_KEY` | Your `/admin` key. If unset, one is generated and printed in the logs. |
+
+`/healthz` returns `{"ok":true}` for the host's health check.
 
 ## What is verified, and what is not
 
