@@ -1,129 +1,127 @@
-# Getting it on the real internet
+# Getting it on the real internet — for free
 
-The site runs. It needs one thing the sandbox cannot give it: a host that stays
-up, with a disk that keeps the registrations.
+**You do not need to pay anything.** The $7 Render instance was one option, not a
+requirement. Here are the paths that cost ₹0, in the order I would try them.
 
-## Read this first
+| Path | Cost | Always on? | Setup | Catch |
+| --- | --- | --- | --- | --- |
+| **A. Share from your own machine** | ₹0 | No | 2 min | Runs only while your machine is awake |
+| **B. Vercel + free Postgres** | ₹0 | Yes | ~30 min, one free account | Needs a storage rewrite, which I would do |
+| **C. Vercel + unlock codes** | ₹0 | Yes | ~30 min | Different flow: you issue a code per student |
+| D. Render + disk | ~$7/mo | Yes | 5 min | The only option that costs money |
 
-I cannot press the deploy button, and it is not a matter of trying harder. My
-network from this session reaches **GitHub and package registries only** —
-`github.com`, `api.github.com`, `registry.npmjs.org`, `pypi.org`. Render, Fly,
-Cloudflare and Vercel's control planes are not reachable from here. I checked for
-connectors: there is no Render or Fly connector, and the Vercel one exists but is
-disconnected *and* is the wrong shape for this app (below).
+**My recommendation for 18 November: Path A.** It is the app exactly as it has
+been tested, it costs nothing, and the session is a one-hour window — your
+machine is going to be on anyway while you host. Decide on always-on only if the
+surveys need to trickle in across several days.
 
-So the division of labour is: **I make it a three-click job, you click.** That
-part is done — the repo now has a Render blueprint, a Fly config and a compose
-file.
+---
 
-## Which host
-
-| | Cost | Time | Good for |
-| --- | --- | --- | --- |
-| **Render** + 1 GB disk | ~$7/mo | 5 min | The real event. Recommended. |
-| **Fly.io** + volume | ~$3–5/mo | 15 min | Cheapest reliable option, needs their CLI |
-| **Your laptop** + Cloudflare tunnel | free | 2 min | Testing with friends *today* |
-| Vercel | — | — | **No.** See the note at the end |
-
-Check current pricing yourself; these move.
-
-## Path A — Render (recommended)
-
-1. Push is already done; the repo is on GitHub.
-2. [dashboard.render.com](https://dashboard.render.com) → **New +** → **Blueprint**.
-3. Pick `prateek-gadkar/google_gemini_ambassador`.
-4. Render reads `render.yaml` and shows you what it will create. Click **Apply**.
-5. Wait ~3 minutes. You get `https://certificate-station.onrender.com`.
-6. **Environment** tab → copy `ADMIN_KEY`. That is your `/admin` key.
-
-**Why it must be the paid instance, not free:** the free plan has no persistent
-disk and sleeps after 15 minutes idle. Every registration lives in a JSON file
-on disk — on free, the file disappears on each deploy and every restart. Starter
-plus a 1 GB disk is the smallest setup where student data survives. Do not
-"save $7" here; that is the whole event.
-
-Then finish setup: open `/admin` → upload your signature → `/calibrate` → position
-the name and date → **Save and enable downloads**.
-
-## Path B — Fly.io (cheapest)
-
-Needs their CLI and a card. From `app/`:
+## Path A — share from your own machine (₹0, today)
 
 ```bash
-fly launch --no-deploy --copy-config          # accept the existing fly.toml
-fly volumes create data --size 1 --region bom # the volume is the point
-fly secrets set ADMIN_KEY="$(openssl rand -base64 18)"
-fly deploy
+cd app
+./scripts/share.sh
 ```
 
-`fly status` shows the URL. `fly secrets list` reminds you of the key name; if
-you lose the value, set it again with the command above and use the new one.
+It starts the site, opens a public HTTPS tunnel, and prints two things: your
+admin key, and a URL like `https://brave-tiger-mango.trycloudflare.com`. Send
+students that URL.
 
-## Path C — your laptop, free, right now
+Verified working end to end: the script starts the server, waits until it
+answers, keeps the admin key you already have (it reads it back from
+`data/gsa.json` rather than inventing a new one), extracts the public URL, and
+shuts everything down cleanly on Ctrl-C.
 
-For checking that 70 phones can actually reach it before you pay anyone:
+**Install a tunnel program first.** The script tells you how if it can't find
+one:
 
-```bash
-# terminal 1
-cd app && ADMIN_KEY="test-key-123" npm start
+- `cloudflared` — no account needed, but **the URL changes every restart**
+- `ngrok` — free account, and you can claim **one free static domain**, so the
+  URL is the same every time
 
-# terminal 2
-cloudflared tunnel --url http://localhost:8080
-```
+Use ngrok for the event. A URL that changes on restart means re-sending it to 70
+people.
 
-You get a public `https://something.trycloudflare.com` URL that anyone can open.
-No account needed.
+**Then, the important part:**
 
-Two honest caveats: the URL changes every time you restart it, and the site dies
-if your laptop sleeps or closes. Fine for a rehearsal, not for 18 November.
+1. Keep the machine plugged in, and turn off sleep.
+2. **Do not close the terminal.** Closing it takes the site down.
+3. If it dies mid-session, run the script again and resend the URL.
+
+Good for: the session itself, and rehearsing today. Not good for: a survey link
+that must stay alive for three days unattended.
+
+## Path B — Vercel + free Postgres (₹0, always on)
+
+Vercel's free Hobby plan needs no card, and I can deploy to it directly — the
+Vercel connection is already working on your account.
+
+**But Vercel alone cannot run this app.** It is serverless: each request may land
+on a different instance, and the filesystem is wiped. This app keeps
+registrations in a file, so on Vercel they would vanish at random.
+
+The fix is a free hosted database (Neon or Supabase — both free, email only, no
+card), plus a rewrite of the storage layer from "read a JSON file" to "talk to
+the database". That is a contained change: everything else — the gate, the
+certificate renderer, the admin console — stays as it is.
+
+What I would need from you: a free Neon or Supabase account, and the connection
+string. Then I deploy and verify it myself.
+
+## Path C — Vercel with unlock codes (₹0, always on, no database)
+
+If you would rather not create a database account: the app can hold **no state
+at all**. After you verify a student's receipts, you generate a one-time unlock
+code for them; they enter it on the site and the certificate unlocks. The code is
+signed with a secret kept in Vercel's environment settings, so it cannot be
+forged.
+
+Fully free, always on, no database anywhere. The cost is a change in workflow:
+no self-registration, and you send one code per student (scriptable — a throwaway
+page can generate all 70 at once and give you a list).
+
+## Path D — why the paid option existed
+
+Render with a 1 GB disk is the boring, always-on, no-extra-accounts option. It is
+worth $7 only if you want to think about none of the above. Nothing else in this
+file depends on it.
+
+`render.yaml` is in the repo if you ever go that way.
+
+---
 
 ## A custom domain
 
-Optional. Your host already gives you a working HTTPS URL, and students will not
-care. If you want one:
+Optional, and it does **not** need to be a portfolio domain — this site does not
+need to share a name with anything.
 
-1. Buy it — Cloudflare Registrar sells at cost (~₹900/yr for a `.com`), Namecheap
-   is similar. A `.in` is cheaper. **I cannot buy or pay for this.**
-2. In your host's dashboard, add the custom domain (Render: Settings → Custom
-   Domains).
-3. At the registrar, add the CNAME record your host shows you.
-4. Wait for DNS, and the host issues the TLS certificate automatically.
+There is no free .com. If you ever buy one (~₹900/yr at Cloudflare Registrar or
+Namecheap), point it at whichever host you chose: add a CNAME where the host
+tells you, and TLS is issued automatically. I cannot buy or pay for it.
 
-Skip the portfolio-domain idea unless you want one anyway — this app does not
-need to share a domain with anything.
+Skipping it costs you nothing: `xyz.ngrok-free.app` or
+`certificate-station.vercel.app` works fine for 70 students.
 
-## After it is live
+## Before the event
 
-- **Back up before the event and after it:** `cp -r <disk>/gsa.json ~/backup`.
-  On Render: Shell tab → `cat /var/data/gsa.json > /tmp/b && download`. Simpler:
-  `/admin` → **Download CSV** gets you every registration and certificate serial.
-- **Do a rehearsal before 18 November:** register on your phone using the real
-  URL, complete both tasks, download a certificate. That tests the exact path a
-  student takes, on a real network, through the same TLS.
+- **Rehearse on a real phone, on mobile data**, not just your laptop. Register,
+  complete both tasks, download a certificate.
+- **Back up** `app/data/gsa.json` (or `/var/data/gsa.json` on a host) before and
+  after. `/admin` → **Download CSV** is a second copy of every registration.
 - **Keep the admin key out of the group chat.** Anyone with it can mark tasks
   verified.
 
-## Why not Vercel
+## What the gate does, and what it does not
 
-Vercel is serverless: each request may run on a different instance, and the
-filesystem is read-only apart from a temporary directory that is wiped. This app
-keeps state in a file, so on Vercel registrations would vanish seemingly at
-random. Making it work there means moving to a hosted database (Neon/Postgres)
-and rewriting the storage layer — more moving parts, more ways to fail, days
-before your event.
+Worth knowing before you promise anyone anything.
 
-If you specifically want a Vercel deployment, connect the Vercel app and I will
-do that rewrite. I would just rather you did not need it.
+It stops a student downloading a certificate **before** they finish the tasks.
+That is the procedural control you asked for, and it is enforced on the server:
+one of two tasks is still `403`.
 
-## Running it in VS Code
-
-Not needed for deployment — GitHub is already the source of truth, and any host
-builds from it. If you want to run or edit it locally, open the folder and:
-
-```bash
-cd app && npm start      # http://localhost:8080
-cd app && npm test       # 35 checks
-```
-
-A local server is useful for trying changes. It is not a way to give 70 students
-a URL.
+It does not stop a determined person who has already unlocked from taking the
+artwork and signature and making their own certificate — the download is rendered
+in the browser, so the images have to be reachable by the browser. Treat the
+gate as "no shortcuts", not as "forgery-proof". If that matters for how you
+verify entries, tell me and I will harden it.

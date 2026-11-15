@@ -125,7 +125,7 @@ Three things about it are deliberate:
    Then drag the fields into place on the calibration screen and press enable.
 
 Full setup and operations: [`app/README.md`](app/README.md).
-Getting it onto a real URL: [`DEPLOY.md`](DEPLOY.md).
+Getting it onto a real URL **for free**: [`DEPLOY.md`](DEPLOY.md) — or just `cd app && ./scripts/share.sh`.
 
 ### Don't miss this one
 
