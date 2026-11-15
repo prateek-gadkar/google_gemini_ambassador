@@ -1,6 +1,8 @@
-# Runtime state: registrations, receipts, screenshots, uploaded artwork.
+# Runtime state: registrations, receipts, screenshots.
 # Never commit student data.
 data/
-public/assets/certificate-template.*
 node_modules/
 *.tmp
+
+# The signature is personal and is not shipped; upload it through /admin.
+public/assets/signature.*

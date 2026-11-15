@@ -38,6 +38,17 @@ function loadImage(src) {
   });
 }
 
+/** Today's date, written exactly as configured in config.js. */
+function formatDate(spec) {
+  var options = (spec && spec.options) || { day: 'numeric', month: 'long', year: 'numeric' };
+  var locale = (spec && spec.locale) || 'en-GB';
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(new Date());
+  } catch (err) {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
 function prepare() {
   var params = new URLSearchParams(window.location.search);
   var typed = (params.get('name') || '').trim();
@@ -53,15 +64,19 @@ function prepare() {
   getIssued(typed)
     .then(function (data) {
       $('certStatus').textContent = 'Drawing your certificate...';
-      return loadImage(data.render.templateUrl).then(function (img) {
-        return { data: data, img: img };
+      var render = data.render;
+      var jobs = [loadImage(render.templateUrl)];
+      if (render.signatureUrl) jobs.push(loadImage(render.signatureUrl));
+      return Promise.all(jobs).then(function (images) {
+        return { data: data, template: images[0], signature: images[1] || null };
       });
     })
     .then(function (bundle) {
-      var img = bundle.img;
       var data = bundle.data;
-      var width = img.naturalWidth || img.width;
-      var height = img.naturalHeight || img.height;
+      var render = data.render;
+      var template = bundle.template;
+      var width = template.naturalWidth || template.width;
+      var height = template.naturalHeight || template.height;
 
       // Keep the canvas inside browser memory limits while preserving the
       // template's aspect ratio.
@@ -74,12 +89,25 @@ function prepare() {
       canvas.height = outH;
       var ctx = canvas.getContext('2d');
 
-      var nameCfg = Object.assign({}, data.render.name);
-      var placement = window.CertRender.drawCertificate(ctx, img, data.cert.name, nameCfg);
+      // Draw at full template resolution: scale the context, not the maths, so
+      // every measured fraction stays exact.
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+      var dateText = formatDate(render.dateFormat);
+      var placement = window.CertRender.drawCertificate(
+        ctx,
+        template,
+        {
+          name: data.cert.name,
+          date: dateText,
+          signatureImage: bundle.signature,
+        },
+        render.fields
+      );
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       $('certMeta').textContent =
-        data.cert.serial + ' · ' + new Date(data.cert.issuedAt).toLocaleDateString() +
-        ' · ' + outW + 'x' + outH + 'px';
+        data.cert.serial + ' · ' + dateText + ' · ' + outW + 'x' + outH + 'px';
       $('certStatus').textContent = 'Ready';
       $('btnDownload').disabled = false;
       hideBanner();
@@ -106,7 +134,6 @@ function prepare() {
         }, 'image/png');
       };
 
-      // Leaving a trace is useful when debugging a print misalignment.
       if (window.console && console.info) {
         console.info('certificate placement', placement);
       }

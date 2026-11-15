@@ -1,9 +1,10 @@
 // ===========================================================================
 //  EDIT THIS FILE. Everything the site says about your event lives here.
 //
-//  Any field left as an empty string is treated as "not supplied yet": the
-//  certificate download stays disabled and the UI shows what is missing,
-//  rather than filling the gap with guesswork.
+//  The certificate artwork already contains all the official wording (event
+//  title, the paragraph, the Google and GSA marks), so this app prints only
+//  the three blanks the template leaves: the student's name, the date, and
+//  your signature. Nothing else is added to the certificate.
 // ===========================================================================
 
 export const CONFIG = {
@@ -11,14 +12,21 @@ export const CONFIG = {
   siteName: 'Certificate Station',
   tagline: 'Complete every required task, then collect your certificate.',
 
-  // --- Your event -----------------------------------------------------------
-  // Blank until you supply the exact wording. Nothing here is auto-filled.
+  // Recorded for reference only. The certificate prints these from the
+  // artwork, so changing them here does not change the certificate.
   event: {
-    title: '',        // e.g. exactly as it should print
-    date: '',         // e.g. exactly as it should print
-    campus: '',       // e.g. exactly as it should print
-    ambassador: '',   // name as it should appear, if the template has this field
-    gid: '13597',     // confirmed
+    title: 'Game On: Imagine the Impossible',
+    gid: '13597',
+  },
+
+  // --- How the date is written on the certificate --------------------------
+  // Change these two lines to change the format. Examples:
+  //   { day: 'numeric', month: 'long',  year: 'numeric' }  ->  15 November 2026
+  //   { day: '2-digit', month: '2-digit', year: 'numeric' } ->  15/11/2026
+  //   { day: 'numeric', month: 'short', year: 'numeric' }   ->  15 Nov 2026
+  dateFormat: {
+    locale: 'en-GB',
+    options: { day: 'numeric', month: 'long', year: 'numeric' },
   },
 
   // --- The gate -------------------------------------------------------------

@@ -48,6 +48,11 @@ test('seventy students register, finish tasks and download certificates concurre
     headers: { 'x-admin-key': ADMIN_KEY },
     body: TINY_PNG,
   });
+  await fetch(base + '/api/admin/signature', {
+    method: 'POST',
+    headers: { 'x-admin-key': ADMIN_KEY },
+    body: TINY_PNG,
+  });
   await fetch(base + '/api/admin/cert-config', {
     method: 'POST',
     headers: { 'x-admin-key': ADMIN_KEY, 'content-type': 'application/json' },

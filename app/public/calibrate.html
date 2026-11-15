@@ -13,8 +13,8 @@
     <div class="brand">
       <div class="dot"></div>
       <div>
-        <strong>Calibrate the name field</strong>
-        <span>Drag the sample name onto the blank space in the artwork</span>
+        <strong>Calibrate the certificate</strong>
+        <span>Drag each blank into place on the real artwork</span>
       </div>
     </div>
     <a href="/admin"><button class="ghost small" type="button">Back</button></a>
@@ -34,32 +34,41 @@
   </section>
 
   <section id="panel" class="hidden">
+
     <div class="card">
+      <div class="row" id="fieldPicker" style="margin-bottom:12px">
+        <button class="primary small" type="button" data-field="name">Name</button>
+        <button class="ghost small" type="button" data-field="date">Date</button>
+        <button class="ghost small" type="button" data-field="signature">Signature</button>
+      </div>
       <div id="stageWrap" style="position:relative;line-height:0">
         <canvas id="stage" style="width:100%;cursor:crosshair;touch-action:none"></canvas>
       </div>
-      <p class="tiny" style="margin-top:10px">
-        Click or drag anywhere on the artwork to move the name. The sample
-        <b>Ananya Sharma</b> is only a preview and is never saved onto a real certificate.
-      </p>
+      <p class="tiny" style="margin-top:10px" id="stageHint"></p>
+      <div class="row" style="margin-top:10px">
+        <button class="ghost small" type="button" id="btnPreview">Download preview PNG</button>
+        <span class="tiny">The preview shows a sample name and today's date. Neither is ever saved.</span>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Adjust</h2>
-      <div class="split">
+      <h2>Adjust <span class="tiny" id="activeLabel"></span></h2>
+
+      <div class="split" id="textControls">
         <label class="field">
           <span>Font size <span class="tiny mono" id="sizeVal"></span></span>
-          <input type="range" id="size" min="1" max="12" step="0.5">
+          <input type="range" id="size" min="0.5" max="10" step="0.1">
         </label>
         <label class="field">
-          <span>Max text width <span class="tiny mono" id="maxVal"></span></span>
-          <input type="range" id="maxWidth" min="10" max="100" step="1">
+          <span>Max width <span class="tiny mono" id="maxVal"></span></span>
+          <input type="range" id="maxWidth" min="2" max="100" step="1">
         </label>
         <label class="field">
-          <span>Font family</span>
+          <span>Font</span>
           <select id="font">
+            <option value="google">Google Sans (official)</option>
+            <option value="sans">Sans-serif fallback</option>
             <option value="serif">Serif</option>
-            <option value="sans-serif">Sans-serif</option>
           </select>
         </label>
         <label class="field">
@@ -85,12 +94,24 @@
         </label>
       </div>
 
+      <div class="split hidden" id="sigControls">
+        <label class="field">
+          <span>Signature width <span class="tiny mono" id="sigWVal"></span></span>
+          <input type="range" id="sigWidth" min="1" max="60" step="0.5">
+        </label>
+        <label class="field">
+          <span>Opacity <span class="tiny mono" id="sigOVal"></span></span>
+          <input type="range" id="sigOpacity" min="10" max="100" step="1">
+        </label>
+      </div>
+
       <div class="row" style="margin-top:6px">
         <button class="primary" type="button" id="btnEnable">Save and enable downloads</button>
-        <button class="ghost" type="button" id="btnSave" >Save only</button>
+        <button class="ghost" type="button" id="btnSave">Save only</button>
         <button class="ghost small danger" type="button" id="btnDisable">Disable downloads</button>
       </div>
       <div class="msg" id="saveMsg"></div>
+      <p class="tiny" id="readiness" style="margin-top:10px"></p>
     </div>
   </section>
 

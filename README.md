@@ -112,15 +112,17 @@ npm test         # 27 checks incl. a 70-student concurrency run
 
 Three things about it are deliberate:
 
-1. **It will not print anything you have not given it.** Event title, date and
-   campus are blank in `app/config.js`, and downloads stay disabled until a real
-   certificate template is uploaded and calibrated. There is no placeholder
-   artwork pretending to be official.
+1. **It adds nothing to the official artwork.** The certificate image already
+   carries all the wording, so the app writes only the three blanks the template
+   leaves open: the name, today's date, and your signature. Their positions were
+   measured off the artwork, not guessed.
 2. **The gate is enforced server-side**, not hidden in the page. Submitting one
    of two tasks still returns `403`. Rejecting a task re-locks the certificate
-   and revokes an issued one.
-3. **Setup is where you decide the wording.** Upload the artwork, drag the name
-   field into place on the calibration screen, press enable. Two minutes.
+   and revokes an issued one. And no certificate is issued at all until both the
+   artwork and your signature are in place — an unsigned certificate is not a
+   certificate.
+3. **You still choose two things:** your signature image, and the date format.
+   Then drag the fields into place on the calibration screen and press enable.
 
 Full setup and operations: [`app/README.md`](app/README.md).
 

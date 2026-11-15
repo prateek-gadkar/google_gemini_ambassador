@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Store, normaliseName, certSerial } from '../lib/store.js';
+import { Store, normaliseName, certSerial, defaultCertConfig } from '../lib/store.js';
 import { signSession, verifySession, readCookie } from '../lib/auth.js';
 
 await import('../public/cert-render.js');
-const { computeNamePlacement, drawCertificate } = globalThis.CertRender;
+const { computeTextPlacement, computeImagePlacement, drawCertificate } = globalThis.CertRender;
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-unit-'));
@@ -106,89 +106,155 @@ test('readCookie pulls the right value out of a header', () => {
 });
 
 // ---------------------------------------------------------------------------
-test('name placement scales with the template and clamps bad input', () => {
-  const place = computeNamePlacement(2000, 1414, { x: 0.5, y: 0.5, size: 0.05 });
-  assert.equal(place.x, 1000);
-  assert.equal(place.y, 707);
-  assert.equal(place.fontSize, Math.round(1414 * 0.05));
-  assert.equal(place.font, `600 ${place.fontSize}px serif`);
+// ---------------------------------------------------------------------------
+// Geometry measured off the official certificate artwork (6142 x 4429) by
+// locating the three printed rules. These constants are the ground truth the
+// defaults must match.
+const TEMPLATE = { width: 6142, height: 4429 };
+const RULES = {
+  name: { y: 2354, x0: 1348, x1: 4793 },
+  date: { y: 3774, x0: 685, x1: 1574 },
+  signature: { y: 3774, x0: 4567, x1: 5456 },
+};
+const BODY_TEXT_BOTTOM = 1882; // bottom of "This is to certify that"
+
+test('text placement scales with the template and clamps bad input', () => {
+  const place = computeTextPlacement(TEMPLATE.width, TEMPLATE.height, {
+    x: 0.5, y: 0.5, size: 0.05, weight: '500',
+  });
+  assert.equal(place.x, 3071);
+  assert.equal(place.y, 4429 * 0.5);
+  assert.equal(place.fontSize, Math.round(4429 * 0.05));
+  assert.match(place.font, /^500 \d+px "Google Sans"/);
   assert.equal(place.align, 'center');
-  assert.equal(place.maxWidth, 2000 * 0.8);
+  assert.equal(place.maxWidth, TEMPLATE.width * 0.8);
 
-  const big = computeNamePlacement(4000, 2828, { x: 0.5, y: 0.5, size: 0.05 });
-  assert.equal(big.fontSize, Math.round(2828 * 0.05), 'font scales with the template height');
-
-  const wild = computeNamePlacement(1000, 1000, { x: 9, y: -3, size: 0, maxWidth: 5, color: 'red' });
-  assert.equal(wild.x, 1000, 'x is clamped to 1');
-  assert.equal(wild.y, 0, 'y is clamped to 0');
-  assert.ok(wild.fontSize >= 8, 'font never goes below the floor');
-  assert.equal(wild.maxWidth, 1000, 'maxWidth is clamped to full width');
-  assert.equal(wild.color, '#111111', 'invalid colour falls back rather than throwing');
+  const small = computeTextPlacement(1000, 1000, { x: 9, y: -3, size: 0, maxWidth: 5, color: 'red', font: 'bogus' });
+  assert.equal(small.x, 1000, 'x clamps to 1');
+  assert.equal(small.y, 0, 'y clamps to 0');
+  assert.ok(small.fontSize >= 8, 'font floor');
+  assert.equal(small.maxWidth, 1000, 'maxWidth clamps to full width');
+  assert.equal(small.color, '#111111', 'invalid colour falls back');
+  assert.match(small.font, /Google Sans/, 'unknown font family falls back');
 });
 
-test('drawCertificate draws the template then the name, in that order', () => {
+test('signature placement converts fractions to pixels', () => {
+  const place = computeImagePlacement(1000, 500, { x: 0.8, y: 0.9, width: 0.2, opacity: 0.5 });
+  assert.equal(place.x, 800);
+  assert.equal(place.bottom, 450);
+  assert.equal(place.width, 200);
+  assert.equal(place.opacity, 0.5);
+
+  const wild = computeImagePlacement(1000, 500, { x: -4, y: 12, width: 99, opacity: 0 });
+  assert.equal(wild.x, 0);
+  assert.equal(wild.bottom, 500);
+  assert.equal(wild.width, 1000);
+  assert.equal(wild.opacity, 0.1);
+});
+
+function stubContext() {
   const calls = [];
   let currentFont = '';
-
   const ctx = {
     fillStyle: '',
     textAlign: '',
     textBaseline: '',
+    globalAlpha: 1,
     get font() { return currentFont; },
     set font(value) { currentFont = value; },
-    clearRect: (...args) => calls.push(['clearRect', ...args]),
-    drawImage: (...args) => calls.push(['drawImage', ...args]),
-    fillText: (...args) => calls.push(['fillText', ...args]),
+    save: () => calls.push(['save']),
+    restore: () => calls.push(['restore']),
+    clearRect: (...a) => calls.push(['clearRect', ...a]),
+    drawImage: (...a) => calls.push(['drawImage', ...a]),
+    fillText: (...a) => calls.push(['fillText', ...a]),
     measureText(text) {
       const size = Number((currentFont.match(/(\d+)px/) || [0, 16])[1]);
       return { width: text.length * size * 0.5 };
     },
   };
+  return { ctx, calls };
+}
 
-  const image = { width: 2000, height: 1414 };
-  const result = drawCertificate(ctx, image, 'Ananya Sharma', {
-    x: 0.5, y: 0.6, size: 0.04, align: 'center', color: '#223344',
-  });
+test('drawCertificate fills all three blanks on the real artwork', () => {
+  const { ctx, calls } = stubContext();
+  const cfg = defaultCertConfig();
+  const template = { width: TEMPLATE.width, height: TEMPLATE.height, naturalWidth: TEMPLATE.width, naturalHeight: TEMPLATE.height };
+  const signatureImage = { width: 800, height: 300 };
+
+  const out = drawCertificate(
+    ctx,
+    template,
+    { name: 'Ananya Sharma', date: '15 November 2026', signatureImage },
+    cfg
+  );
 
   const order = calls.map((c) => c[0]);
-  assert.deepEqual(order, ['clearRect', 'drawImage', 'fillText']);
-  assert.deepEqual(calls[1].slice(1), [image, 0, 0, 2000, 1414]);
+  assert.equal(order[0], 'clearRect');
+  assert.equal(order[1], 'drawImage', 'template drawn first');
 
-  const nameCall = calls[2];
-  assert.equal(nameCall[1], 'Ananya Sharma');
-  assert.equal(nameCall[2], 1000);
-  assert.equal(nameCall[3], 1414 * 0.6);
-  assert.equal(ctx.textAlign, 'center');
-  assert.equal(ctx.textBaseline, 'middle');
-  assert.equal(ctx.fillStyle, '#223344');
-  assert.ok(result.fontSize > 0);
+  const texts = calls.filter((c) => c[0] === 'fillText');
+  assert.equal(texts.length, 2, 'exactly two text fields: name and date');
+  assert.equal(texts[0][1], 'Ananya Sharma');
+  assert.equal(texts[1][1], '15 November 2026');
+
+  // Signature image drawn after the text.
+  const sigDraw = calls.filter((c) => c[0] === 'drawImage')[1];
+  assert.ok(sigDraw, 'signature is drawn');
+
+  assert.equal(ctx.textBaseline, 'alphabetic');
+  assert.ok(out.name && out.date && out.signature);
+});
+
+test('defaults land on the blanks in the real artwork, not on the rules', () => {
+  const cfg = defaultCertConfig();
+  const W = TEMPLATE.width;
+  const H = TEMPLATE.height;
+
+  const name = computeTextPlacement(W, H, cfg.name);
+  assert.ok(Math.abs(name.x - 3070.5) < 8, `name x ${name.x} should centre on 3070.5`);
+  assert.ok(name.y < RULES.name.y, 'name baseline must sit above the rule');
+  assert.ok(name.y > RULES.name.y - 140, 'but not floating far above it');
+  assert.ok(name.y - name.fontSize * 0.75 > BODY_TEXT_BOTTOM + 40,
+    'name must not collide with "This is to certify that"');
+  assert.ok(name.fontSize > 90 && name.fontSize < 160, 'name between body text and title size');
+  assert.ok(name.maxWidth <= RULES.name.x1 - RULES.name.x0, 'name box fits inside the rule');
+
+  const date = computeTextPlacement(W, H, cfg.date);
+  assert.ok(Math.abs(date.x - 1129.5) < 8, `date x ${date.x} should centre on 1129.5`);
+  assert.ok(date.y < RULES.date.y, 'date baseline above its rule');
+  assert.ok(date.y > RULES.date.y - 120);
+  assert.ok(date.maxWidth <= RULES.date.x1 - RULES.date.x0, 'date box fits inside its rule');
+
+  const sig = computeImagePlacement(W, H, cfg.signature);
+  assert.ok(Math.abs(sig.x - 5011.5) < 8, `signature x ${sig.x} should centre on 5011.5`);
+  assert.ok(sig.bottom < RULES.signature.y, 'signature sits above its rule');
+  assert.ok(sig.bottom > RULES.signature.y - 90);
+  assert.ok(sig.width < RULES.signature.x1 - RULES.signature.x0, 'signature narrower than its rule');
 });
 
 test('an over-long name shrinks to stay inside the text box', () => {
-  let currentFont = '';
-  let lastFill = null;
-  const ctx = {
-    fillStyle: '', textAlign: '', textBaseline: '',
-    get font() { return currentFont; },
-    set font(value) { currentFont = value; },
-    clearRect() {},
-    drawImage() {},
-    fillText: (text, x, y) => { lastFill = { text, x, y }; },
-    measureText(text) {
-      const size = Number((currentFont.match(/(\d+)px/) || [0, 16])[1]);
-      return { width: text.length * size * 0.5 };
-    },
-  };
+  const { ctx } = stubContext();
+  const cfg = defaultCertConfig();
+  const template = { width: TEMPLATE.width, height: TEMPLATE.height };
+  const longName = 'Ananyasharma Venkataramanasubramaniam Krishnamurthy Pillai';
 
-  const image = { width: 2000, height: 1414 };
-  const longName = 'Ananyasharma Venkataramanasubramaniam Krishnamurthy';
-  const result = drawCertificate(ctx, image, longName, {
-    x: 0.5, y: 0.5, size: 0.06, maxWidth: 0.5,
-  });
+  const out = drawCertificate(ctx, template, { name: longName, date: '', signatureImage: null }, cfg);
+  const startSize = Math.round(cfg.name.size * TEMPLATE.height);
 
-  const startSize = Math.round(1414 * 0.06);
-  assert.ok(result.fontSize < startSize, 'font shrank');
-  const widthAtEnd = longName.length * result.fontSize * 0.5;
-  assert.ok(widthAtEnd <= 2000 * 0.5 + 1, 'text now fits inside the box');
-  assert.equal(lastFill.text, longName);
+  assert.ok(out.name.fontSize < startSize, 'font shrank');
+  const boxWidth = cfg.name.maxWidth * TEMPLATE.width;
+  const widthAtEnd = longName.length * out.name.fontSize * 0.5;
+  assert.ok(widthAtEnd <= boxWidth + 1, 'long name now fits its box');
+  assert.equal(out.date, null, 'no date text was drawn');
+  assert.equal(out.signature, null, 'no signature drawn');
+});
+
+test('an empty name or date draws nothing rather than a blank box', () => {
+  const { ctx, calls } = stubContext();
+  const cfg = defaultCertConfig();
+  const template = { width: TEMPLATE.width, height: TEMPLATE.height };
+  const out = drawCertificate(ctx, template, { name: '', date: '', signatureImage: null }, cfg);
+  assert.equal(out.name, null);
+  assert.equal(out.date, null);
+  assert.equal(calls.filter((c) => c[0] === 'fillText').length, 0);
 });

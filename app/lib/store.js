@@ -6,20 +6,41 @@ const SECRET_BYTES = 32;
 
 export function defaultCertConfig() {
   return {
-    // Set only when a real template image has been uploaded by the admin.
+    // Set only when the real files have been uploaded by the admin.
     templateFile: null,
+    signatureFile: null,
     templateReady: false,
-    // Name placement, expressed as fractions of the image dimensions so the
-    // same numbers work whether the template is 1000px or 4000px wide.
+
+    // All positions are fractions of the artwork, measured off the official
+    // JPG (6142 x 4429) by locating the three printed rules. `y` for text is
+    // the baseline; `y` for the signature is its bottom edge.
     name: {
-      x: 0.5,
-      y: 0.52,
-      size: 0.055,
+      x: 0.5,          // centred over the long rule (centre 3070.5 / 6142)
+      y: 0.52246,      // baseline sits just above that rule (2314 / 4429)
+      size: 0.027,     // ~120px at full size, between body text and title
+      weight: '500',
+      font: 'google',
       color: '#111111',
-      font: 'serif',
-      weight: '600',
       align: 'center',
-      maxWidth: 0.8,
+      maxWidth: 0.55,  // the rule itself is 0.561 of the width
+      letterSpacing: 0,
+    },
+    date: {
+      x: 0.18390,      // centred over the left-hand rule (1129.5 / 6142)
+      y: 0.84308,      // baseline just above it (3734 / 4429)
+      size: 0.0205,    // ~91px at full size
+      weight: '400',
+      font: 'google',
+      color: '#111111',
+      align: 'center',
+      maxWidth: 0.14,  // the rule is 0.1447 of the width
+      letterSpacing: 0,
+    },
+    signature: {
+      x: 0.81594,      // centred over the right-hand rule (5011.5 / 6142)
+      y: 0.84533,      // bottom edge just above it (3744 / 4429)
+      width: 0.12,     // ~737px at full size, inside the 889px rule
+      opacity: 1,
     },
   };
 }

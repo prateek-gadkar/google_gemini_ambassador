@@ -102,17 +102,22 @@ function publicStudent(student) {
 
 function certView(store) {
   const cfg = store.read((d) => d.certConfig);
+  const templateReady = !!(cfg.templateFile && cfg.templateReady);
+  const signatureReady = !!cfg.signatureFile;
   return {
-    templateReady: !!cfg.templateReady,
+    // A certificate is only issued when the artwork AND the signature are in
+    // place. An unsigned certificate is not a certificate.
+    ready: templateReady && signatureReady,
+    templateReady,
+    signatureReady,
     templateUrl: cfg.templateFile ? `/assets/${cfg.templateFile}` : null,
-    name: { ...cfg.name },
-    event: { ...CONFIG.event },
-    missingEventFields: Object.entries({
-      title: CONFIG.event.title,
-      date: CONFIG.event.date,
-    })
-      .filter(([, value]) => !String(value || '').trim())
-      .map(([key]) => key),
+    signatureUrl: cfg.signatureFile ? `/assets/${cfg.signatureFile}` : null,
+    fields: {
+      name: { ...cfg.name },
+      date: { ...cfg.date },
+      signature: { ...cfg.signature },
+    },
+    dateFormat: { ...CONFIG.dateFormat },
   };
 }
 
@@ -153,6 +158,39 @@ export async function createServer(options = {}) {
       if (!data.adminKey) data.adminKey = crypto.randomBytes(12).toString('base64url');
       effectiveAdminKey = data.adminKey;
     });
+  }
+
+  // The official artwork ships with the app, so adopt it on first boot rather
+  // than making the organiser upload a file they already have. The signature is
+  // personal and is never shipped: it must be uploaded deliberately.
+  for (const ext of ['jpg', 'png']) {
+    const candidate = `certificate-template.${ext}`;
+    const exists = await fs
+      .stat(path.join(assetsDir, candidate))
+      .then(() => true)
+      .catch(() => false);
+    if (!exists) continue;
+    const current = store.read((d) => d.certConfig.templateFile);
+    if (!current) {
+      await store.mutate((data) => {
+        data.certConfig.templateFile = candidate;
+      });
+    }
+    break;
+  }
+  for (const ext of ['png', 'jpg']) {
+    const candidate = `signature.${ext}`;
+    const exists = await fs
+      .stat(path.join(assetsDir, candidate))
+      .then(() => true)
+      .catch(() => false);
+    if (!exists) continue;
+    if (!store.read((d) => d.certConfig.signatureFile)) {
+      await store.mutate((data) => {
+        data.certConfig.signatureFile = candidate;
+      });
+    }
+    break;
   }
 
   const limitRegister = makeRateLimiter(
@@ -376,7 +414,13 @@ export async function createServer(options = {}) {
       const view = certView(store);
       if (!view.templateReady) {
         throw badRequest(
-          'The certificate template has not been loaded yet. Please ask the organiser.',
+          'The certificate artwork has not been loaded yet. Please ask the organiser.',
+          409
+        );
+      }
+      if (!view.signatureReady) {
+        throw badRequest(
+          'The signature has not been added yet, so certificates cannot be issued. Please ask the organiser.',
           409
         );
       }
@@ -480,6 +524,21 @@ export async function createServer(options = {}) {
       return res.end(buf);
     }
 
+    if (route === '/api/admin/signature' && method === 'POST') {
+      requireAdmin(req);
+      const raw = await readBody(req, MAX_TEMPLATE_BYTES);
+      const image = detectImage(raw);
+      if (!image) throw badRequest('Upload the signature as a JPG or PNG image.');
+      const filename = `signature.${image.ext}`;
+      await fs.writeFile(path.join(assetsDir, filename), raw);
+      const other = filename.endsWith('.jpg') ? 'signature.png' : 'signature.jpg';
+      await fs.unlink(path.join(assetsDir, other)).catch(() => {});
+      await store.mutate((data) => {
+        data.certConfig.signatureFile = filename;
+      });
+      return sendJson(res, 200, { cert: certView(store) });
+    }
+
     if (route === '/api/admin/cert-config' && method === 'POST') {
       requireAdmin(req);
       const body = await readJson(req, MAX_BODY_BYTES);
@@ -490,22 +549,39 @@ export async function createServer(options = {}) {
       };
       const updated = await store.mutate((data) => {
         const cfg = data.certConfig;
-        const n = body.name || {};
-        cfg.name = {
-          x: clamp(n.x, 0, 1, cfg.name.x),
-          y: clamp(n.y, 0, 1, cfg.name.y),
-          size: clamp(n.size, 0.01, 0.4, cfg.name.size),
-          color: /^#[0-9a-f]{6}$/i.test(String(n.color)) ? n.color : cfg.name.color,
-          font: ['serif', 'sans-serif'].includes(n.font) ? n.font : cfg.name.font,
-          weight: ['400', '500', '600', '700'].includes(String(n.weight))
-            ? String(n.weight)
-            : cfg.name.weight,
-          align: ['left', 'center', 'right'].includes(n.align) ? n.align : cfg.name.align,
-          maxWidth: clamp(n.maxWidth, 0.1, 1, cfg.name.maxWidth),
+
+        const textField = (incoming, current) => {
+          const v = incoming || {};
+          return {
+            x: clamp(v.x, 0, 1, current.x),
+            y: clamp(v.y, 0, 1, current.y),
+            size: clamp(v.size, 0.002, 0.5, current.size),
+            color: /^#[0-9a-f]{6}$/i.test(String(v.color)) ? v.color : current.color,
+            font: ['google', 'serif', 'sans'].includes(v.font) ? v.font : current.font,
+            weight: ['400', '500', '600', '700'].includes(String(v.weight))
+              ? String(v.weight)
+              : current.weight,
+            align: ['left', 'center', 'right'].includes(v.align) ? v.align : current.align,
+            maxWidth: clamp(v.maxWidth, 0.02, 1, current.maxWidth),
+            letterSpacing: clamp(v.letterSpacing, -0.1, 0.5, current.letterSpacing || 0),
+          };
         };
+
+        if (body.name) cfg.name = textField(body.name, cfg.name);
+        if (body.date) cfg.date = textField(body.date, cfg.date);
+        if (body.signature) {
+          const v = body.signature;
+          cfg.signature = {
+            x: clamp(v.x, 0, 1, cfg.signature.x),
+            y: clamp(v.y, 0, 1, cfg.signature.y),
+            width: clamp(v.width, 0.01, 1, cfg.signature.width),
+            opacity: clamp(v.opacity, 0.1, 1, cfg.signature.opacity),
+          };
+        }
+
         if (typeof body.templateReady === 'boolean') {
-          // Never allow downloads to be enabled without an actual template.
-          cfg.templateReady = body.templateReady && !!cfg.templateFile;
+          // Never allow downloads unless the artwork AND the signature exist.
+          cfg.templateReady = body.templateReady && !!cfg.templateFile && !!cfg.signatureFile;
         }
         return cfg;
       });

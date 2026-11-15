@@ -164,7 +164,7 @@ test('the certificate stays locked until every required task is submitted', asyn
       json: { name: 'Ananya Sharma' },
     });
     assert.equal(noTemplate.status, 409);
-    assert.match(noTemplate.body.error, /template/i);
+    assert.match(noTemplate.body.error, /artwork/i);
   });
 });
 
@@ -193,7 +193,7 @@ test('the name typed at download must match the registration', async () => {
     await client.request('/api/tasks/pre/receipt', { method: 'POST', json: { receipt: 'pre done' } });
     await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
 
-    // Admin uploads artwork and enables downloads.
+    // Admin uploads artwork, then the signature, then enables downloads.
     const upload = await admin.request('/api/admin/template', {
       method: 'POST',
       headers: adminHeaders,
@@ -201,6 +201,16 @@ test('the name typed at download must match the registration', async () => {
     });
     assert.equal(upload.status, 200);
     assert.equal(upload.body.cert.templateReady, false, 'upload alone must not enable downloads');
+    assert.equal(upload.body.cert.signatureReady, false);
+
+    const sig = await admin.request('/api/admin/signature', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: TINY_PNG,
+    });
+    assert.equal(sig.status, 200);
+    assert.equal(sig.body.cert.signatureReady, true);
+    assert.equal(sig.body.cert.ready, false, 'still not enabled');
 
     const enabled = await admin.request('/api/admin/cert-config', {
       method: 'POST',
@@ -209,6 +219,7 @@ test('the name typed at download must match the registration', async () => {
     });
     assert.equal(enabled.status, 200);
     assert.equal(enabled.body.cert.templateReady, true);
+    assert.equal(enabled.body.cert.ready, true);
 
     const wrong = await client.request('/api/certificate/issue', {
       method: 'POST',
@@ -229,7 +240,7 @@ test('the name typed at download must match the registration', async () => {
     assert.equal(good.body.cert.name, 'Ananya Sharma', 'the registered spelling is what gets printed');
     assert.equal(good.body.render.templateReady, true);
     assert.equal(good.body.render.templateUrl, '/assets/certificate-template.png');
-    assert.equal(good.body.render.name.y, 0.55);
+    assert.equal(good.body.render.fields.name.y, 0.55);
 
     const again = await client.request('/api/certificate/issue', {
       method: 'POST',
@@ -258,6 +269,7 @@ test('admin actions require the key, and rejection re-locks the certificate', as
     await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
 
     await admin.request('/api/admin/template', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
+    await admin.request('/api/admin/signature', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
     await admin.request('/api/admin/cert-config', {
       method: 'POST', headers: adminHeaders, json: { templateReady: true },
     });
@@ -341,6 +353,57 @@ test('downloads can never be enabled without a template on disk', async () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.cert.templateReady, false, 'refused: nothing uploaded yet');
     assert.equal(res.body.cert.templateUrl, null);
+  });
+});
+
+test('artwork without a signature cannot be enabled, and issues nothing', async () => {
+  await withServer(async ({ base, admin }) => {
+    const client = makeClient(base);
+    await client.request('/api/register', {
+      method: 'POST', json: { name: 'Ananya Sharma', email: 'a@campus.edu' },
+    });
+    await client.request('/api/tasks/pre/receipt', { method: 'POST', json: { receipt: 'pre done' } });
+    await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
+
+    await admin.request('/api/admin/template', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
+
+    // Enabling without a signature must be refused, not silently accepted.
+    const enabled = await admin.request('/api/admin/cert-config', {
+      method: 'POST', headers: adminHeaders, json: { templateReady: true },
+    });
+    assert.equal(enabled.status, 200);
+    assert.equal(enabled.body.cert.templateReady, false, 'no signature, so no enabling');
+    assert.equal(enabled.body.cert.ready, false);
+
+    const issue = await client.request('/api/certificate/issue', {
+      method: 'POST', json: { name: 'Ananya Sharma' },
+    });
+    assert.equal(issue.status, 409);
+    assert.match(issue.body.error, /artwork|signature/i);
+
+    // Now add the signature and try again.
+    await admin.request('/api/admin/signature', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
+    const retry = await admin.request('/api/admin/cert-config', {
+      method: 'POST', headers: adminHeaders, json: { templateReady: true },
+    });
+    assert.equal(retry.body.cert.ready, true);
+
+    const issued = await client.request('/api/certificate/issue', {
+      method: 'POST', json: { name: 'Ananya Sharma' },
+    });
+    assert.equal(issued.status, 200);
+    assert.equal(issued.body.render.signatureUrl, '/assets/signature.png');
+  });
+});
+
+test('a non-image signature upload is refused', async () => {
+  await withServer(async ({ base, admin }) => {
+    const res = await admin.request('/api/admin/signature', {
+      method: 'POST',
+      headers: { ...adminHeaders, 'content-type': 'application/pdf' },
+      body: Buffer.from('%PDF-1.4 not really an image'),
+    });
+    assert.equal(res.status, 400);
   });
 });
 

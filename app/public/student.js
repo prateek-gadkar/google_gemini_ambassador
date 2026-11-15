@@ -223,11 +223,16 @@ function renderCertCard(student) {
     return;
   }
 
-  if (!state.me.cert.templateReady) {
+  if (!state.me.cert.ready) {
+    var gaps = [];
+    if (!state.me.cert.templateReady) gaps.push('the certificate artwork');
+    if (!state.me.cert.signatureReady) gaps.push('the signature');
     body.appendChild(
       el('div', {
         class: 'banner warn',
-        text: 'You are unlocked, but the certificate artwork has not been loaded yet. The organiser needs to add the template before downloads can be issued.',
+        text:
+          'You are unlocked, but ' + gaps.join(' and ') +
+          ' still needs to be added by the organiser before certificates can be issued.',
       })
     );
     return;

@@ -52,27 +52,32 @@ function setKey(value) {
 
 function renderTemplate(cert) {
   var banner = $('tplBanner');
-  var file = cert.templateUrl ? cert.templateUrl.split('/').pop() : null;
+  var templateName = cert.templateUrl ? cert.templateUrl.split('/').pop() : null;
+  var sigName = cert.signatureUrl ? cert.signatureUrl.split('/').pop() : null;
 
-  if (!file) {
+  if (!templateName) {
     banner.className = 'banner warn';
     banner.textContent =
-      'No certificate template uploaded yet, so downloads are disabled. Upload the official artwork to continue.';
+      'No certificate artwork uploaded yet. Upload the official image to continue.';
+  } else if (!sigName) {
+    banner.className = 'banner warn';
+    banner.textContent =
+      'Artwork uploaded, but your signature image is missing. Downloads stay locked until it is added — an unsigned certificate is not a certificate.';
   } else if (!cert.templateReady) {
     banner.className = 'banner warn';
     banner.textContent =
-      'Template "' + file + '" uploaded but not enabled. Open calibration to position the name, then enable downloads.';
+      'Artwork and signature are in place but downloads are disabled. Open calibration to position the name and date, then enable.';
   } else {
-    var missing = cert.missingEventFields || [];
-    banner.className = 'banner ' + (missing.length ? 'warn' : 'ok');
-    banner.textContent = missing.length
-      ? 'Template is live. Note: ' + missing.join(' and ') + ' in app/config.js are still blank, so only the name is printed.'
-      : 'Template is live and downloads are enabled.';
+    banner.className = 'banner ok';
+    banner.textContent = 'Live. Unlocked students can download their certificate.';
   }
 
-  $('tplState').textContent = file
-    ? 'Template: ' + file + (cert.templateReady ? ' (live)' : ' (not enabled)')
-    : 'No template uploaded.';
+  $('tplState').textContent = templateName
+    ? 'Artwork: ' + templateName + (cert.templateReady ? ' (live)' : ' (not enabled)')
+    : 'No artwork uploaded.';
+  $('sigState').textContent = sigName
+    ? 'Signature: ' + sigName
+    : 'Signature: not uploaded.';
 }
 
 function taskCell(student, task) {
@@ -243,7 +248,28 @@ $('tplFile').addEventListener('change', function () {
   adminFetch('/api/admin/template', { method: 'POST', body: file, raw: true })
     .then(function (res) { return res.json(); })
     .then(function (data) {
-      setMsg($('tplMsg'), 'Uploaded. Now open calibration to place the name.', 'ok');
+      setMsg($('tplMsg'), 'Uploaded. Now open calibration to place the name and date.', 'ok');
+      renderTemplate(data.cert);
+    })
+    .catch(function (err) { setMsg($('tplMsg'), err.message, 'err'); });
+});
+
+$('btnUploadSig').addEventListener('click', function () {
+  $('sigFile').click();
+});
+
+$('sigFile').addEventListener('change', function () {
+  var file = $('sigFile').files && $('sigFile').files[0];
+  if (!file) return;
+  if (file.size > 12 * 1024 * 1024) {
+    setMsg($('tplMsg'), 'Signature must be under 12 MB.', 'err');
+    return;
+  }
+  setMsg($('tplMsg'), 'Uploading signature...');
+  adminFetch('/api/admin/signature', { method: 'POST', body: file, raw: true })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      setMsg($('tplMsg'), 'Signature uploaded. Open calibration to check its position.', 'ok');
       renderTemplate(data.cert);
     })
     .catch(function (err) { setMsg($('tplMsg'), err.message, 'err'); });
