@@ -86,13 +86,43 @@ The full list is in the **🚫 Void rules** tab. Worth five minutes.
 
 ```
 dashboard/index.html          the command center — open this
-WHATS-POSSIBLE.md             everything else I can build, and what I can't do
+dashboard/timer.html          full-screen 60-minute session timer
+app/                          the Certificate Station website — see app/README.md
 playbooks/01-game-on-night.md  host sheet, printable, run it live from this
 playbooks/02-squad-up-reel.md  shot list + captions for your phone
 playbooks/03-study-notebooks.md full interview script + participant log
+playbooks/04-crib-sheet.md     what to say on each slide of the official deck
+promo/promo-pack.md           invites, Hinglish variants, faculty email, nudges
+WHATS-POSSIBLE.md             everything else I can build, and what I can't do
 ```
 
 Your GID (**13597**) is already loaded, so captions and prompts come out ready to paste. Campus name is still blank — add it in the dashboard, or send it over.
+
+## The Certificate Station website
+
+`app/` is a working multi-user site: students register, submit a receipt for each
+required task, and the certificate unlocks only when every required task is in.
+They then type their name and download it.
+
+```bash
+cd app
+npm start        # http://localhost:8080 — prints the admin key on boot
+npm test         # 27 checks incl. a 70-student concurrency run
+```
+
+Three things about it are deliberate:
+
+1. **It will not print anything you have not given it.** Event title, date and
+   campus are blank in `app/config.js`, and downloads stay disabled until a real
+   certificate template is uploaded and calibrated. There is no placeholder
+   artwork pretending to be official.
+2. **The gate is enforced server-side**, not hidden in the page. Submitting one
+   of two tasks still returns `403`. Rejecting a task re-locks the certificate
+   and revokes an issued one.
+3. **Setup is where you decide the wording.** Upload the artwork, drag the name
+   field into place on the calibration screen, press enable. Two minutes.
+
+Full setup and operations: [`app/README.md`](app/README.md).
 
 ### Don't miss this one
 

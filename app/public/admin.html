@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin · Certificate Station</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <strong>Admin console</strong>
+        <span>Registrations, task checks, certificate setup</span>
+      </div>
+    </div>
+    <button class="ghost small hidden" id="btnLock">Lock</button>
+  </header>
+
+  <section id="keyPanel">
+    <div class="card">
+      <h2>Admin key</h2>
+      <p class="muted">
+        Printed in the server log when it starts, or set via the <code>ADMIN_KEY</code>
+        environment variable. It stays in this browser tab only.
+      </p>
+      <label class="field">
+        <span>Key</span>
+        <input type="password" id="adminKey" placeholder="Paste the admin key" autocomplete="off">
+      </label>
+      <div class="row">
+        <button class="primary" type="button" id="btnUnlock">Unlock</button>
+      </div>
+      <div class="msg" id="keyMsg"></div>
+    </div>
+  </section>
+
+  <section id="panel" class="hidden">
+    <div class="banner" id="tplBanner"></div>
+
+    <div class="card">
+      <h2>Certificate setup</h2>
+      <p class="muted" id="tplState">Checking...</p>
+      <div class="row">
+        <input type="file" id="tplFile" accept="image/png,image/jpeg" class="hidden">
+        <button class="ghost" type="button" id="btnUploadTpl">Upload template image</button>
+        <button class="ghost" type="button" id="btnCalibrate">Open calibration</button>
+      </div>
+      <div class="msg" id="tplMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <h2 style="margin:0">Students</h2>
+        <div class="row">
+          <button class="ghost small" type="button" id="btnRefresh">Refresh</button>
+          <button class="ghost small" type="button" id="btnCsv">Download CSV</button>
+        </div>
+      </div>
+      <div id="stats" class="row" style="margin-bottom:12px"></div>
+      <div style="overflow-x:auto">
+        <table id="table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="tiny hidden" id="emptyNote"></p>
+    </div>
+  </section>
+
+</div>
+<script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calibrate certificate · Admin</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <strong>Calibrate the name field</strong>
+        <span>Drag the sample name onto the blank space in the artwork</span>
+      </div>
+    </div>
+    <a href="/admin"><button class="ghost small" type="button">Back</button></a>
+  </header>
+
+  <div id="msg" class="banner hidden"></div>
+
+  <section id="keyPanel" class="hidden">
+    <div class="card">
+      <h2>Admin key required</h2>
+      <label class="field">
+        <span>Key</span>
+        <input type="password" id="adminKey" autocomplete="off" placeholder="Paste the admin key">
+      </label>
+      <button class="primary" type="button" id="btnUnlock">Unlock</button>
+    </div>
+  </section>
+
+  <section id="panel" class="hidden">
+    <div class="card">
+      <div id="stageWrap" style="position:relative;line-height:0">
+        <canvas id="stage" style="width:100%;cursor:crosshair;touch-action:none"></canvas>
+      </div>
+      <p class="tiny" style="margin-top:10px">
+        Click or drag anywhere on the artwork to move the name. The sample
+        <b>Ananya Sharma</b> is only a preview and is never saved onto a real certificate.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Adjust</h2>
+      <div class="split">
+        <label class="field">
+          <span>Font size <span class="tiny mono" id="sizeVal"></span></span>
+          <input type="range" id="size" min="1" max="12" step="0.5">
+        </label>
+        <label class="field">
+          <span>Max text width <span class="tiny mono" id="maxVal"></span></span>
+          <input type="range" id="maxWidth" min="10" max="100" step="1">
+        </label>
+        <label class="field">
+          <span>Font family</span>
+          <select id="font">
+            <option value="serif">Serif</option>
+            <option value="sans-serif">Sans-serif</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Weight</span>
+          <select id="weight">
+            <option value="400">Regular</option>
+            <option value="500">Medium</option>
+            <option value="600">Semibold</option>
+            <option value="700">Bold</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Alignment</span>
+          <select id="align">
+            <option value="center">Centre</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Colour</span>
+          <input type="color" id="color" style="height:42px;padding:4px">
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <button class="primary" type="button" id="btnEnable">Save and enable downloads</button>
+        <button class="ghost" type="button" id="btnSave" >Save only</button>
+        <button class="ghost small danger" type="button" id="btnDisable">Disable downloads</button>
+      </div>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+  </section>
+
+</div>
+<script src="/cert-render.js"></script>
+<script src="/calibrate.js"></script>
+</body>
+</html>
