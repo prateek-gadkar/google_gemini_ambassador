@@ -1,0 +1,33 @@
+// Vercel entry point.
+//
+// The app is a plain Node request handler, so the function just boots the same
+// server the CLI uses and forwards to it. Storage comes from SUPABASE_URL /
+// SUPABASE_SERVICE_KEY when they are set; without them this would fall back to
+// a local file, which a serverless host wipes.
+import { createServer } from '../server.js';
+
+let booting;
+
+function boot() {
+  if (!booting) {
+    booting = createServer({
+      dataDir: process.env.DATA_DIR || '/tmp/gsa-data',
+    }).catch((err) => {
+      booting = null;
+      throw err;
+    });
+  }
+  return booting;
+}
+
+export default async function handler(req, res) {
+  try {
+    const { handle } = await boot();
+    return await handle(req, res);
+  } catch (err) {
+    console.error('boot failed:', err);
+    if (res.headersSent) return res.destroy();
+    res.writeHead(500, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'The site could not start. Check the server logs.' }));
+  }
+}

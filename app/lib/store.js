@@ -45,7 +45,7 @@ export function defaultCertConfig() {
   };
 }
 
-function blank() {
+export function blankDoc() {
   return {
     version: 1,
     secret: crypto.randomBytes(SECRET_BYTES).toString('hex'),
@@ -65,7 +65,7 @@ function blank() {
 export class Store {
   constructor(file) {
     this.file = file;
-    this.data = blank();
+    this.data = blankDoc();
     this._queue = Promise.resolve();
   }
 
@@ -73,7 +73,7 @@ export class Store {
     try {
       const raw = await fs.readFile(this.file, 'utf8');
       const parsed = JSON.parse(raw);
-      const base = blank();
+      const base = blankDoc();
       this.data = {
         ...base,
         ...parsed,

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { CONFIG } from './config.js';
 import { Store, newId, certSerial, normaliseName } from './lib/store.js';
+import { RestStore } from './lib/rest-store.js';
 import {
   sessionCookie,
   clearCookie,
@@ -152,7 +153,20 @@ export async function createServer(options = {}) {
   await fs.mkdir(dataDir, { recursive: true });
   await fs.mkdir(assetsDir, { recursive: true });
 
-  const store = await new Store(path.join(dataDir, 'gsa.json')).init();
+  // Storage: a hosted Postgres over REST when configured (serverless hosts have
+  // no durable disk), otherwise the local JSON file.
+  const remoteUrl = options.supabaseUrl || process.env.SUPABASE_URL;
+  const remoteKey = options.supabaseKey || process.env.SUPABASE_SERVICE_KEY;
+  const store =
+    options.store ||
+    (remoteUrl && remoteKey
+      ? await new RestStore({
+          url: remoteUrl,
+          key: remoteKey,
+          table: process.env.SUPABASE_TABLE || 'state',
+        }).init()
+      : await new Store(path.join(dataDir, 'gsa.json')).init());
+  const isRemote = typeof store.refresh === 'function';
 
   // A stable fallback admin key so the console still works after a restart
   // when no ADMIN_KEY is configured.
@@ -233,6 +247,12 @@ export async function createServer(options = {}) {
     const url = new URL(req.url, 'http://localhost');
     const route = url.pathname;
     const method = req.method || 'GET';
+
+    // A warm serverless instance holds a copy of the document from an earlier
+    // request. Re-read it before anything that depends on current state.
+    if (isRemote && route.startsWith('/api/')) {
+      await store.refresh();
+    }
 
     // ---- student account ---------------------------------------------------
     if (route === '/healthz' && method === 'GET') {
@@ -549,6 +569,9 @@ export async function createServer(options = {}) {
       await fs.unlink(path.join(assetsDir, other)).catch(() => {});
       await store.mutate((data) => {
         data.certConfig.signatureFile = filename;
+        // Hosted filesystems are wiped on deploy, so keep a copy in the
+        // document too. Tens of KB, small enough to hold in one row.
+        data.certConfig.signatureData = `data:${image.mime};base64,${raw.toString('base64')}`;
       });
       return sendJson(res, 200, { cert: certView(store) });
     }
@@ -669,7 +692,23 @@ export async function createServer(options = {}) {
         '/calibrate': '/calibrate.html',
       };
       if (route.startsWith('/assets/')) {
-        if (await serveStatic(res, assetsDir, route.slice('/assets'.length))) return undefined;
+        const wanted = route.slice('/assets/'.length).split('?')[0];
+        if (await serveStatic(res, assetsDir, `/${wanted}`)) return undefined;
+
+        // Fallback: a serverless host with no durable disk keeps it in the doc.
+        const cfg = store.read((d) => d.certConfig);
+        if (cfg.signatureFile === wanted && cfg.signatureData) {
+          const match = /^data:([^;]+);base64,(.+)$/.exec(cfg.signatureData);
+          if (match) {
+            const buf = Buffer.from(match[2], 'base64');
+            res.writeHead(200, {
+              'Content-Type': match[1],
+              'Content-Length': buf.length,
+              'Cache-Control': 'no-cache',
+            });
+            return res.end(buf);
+          }
+        }
       }
       const target = aliases[route] || route;
       if (await serveStatic(res, PUBLIC_DIR, target)) return undefined;
@@ -679,7 +718,7 @@ export async function createServer(options = {}) {
     return sendText(res, 404, 'Not found');
   }
 
-  const server = http.createServer((req, res) => {
+  const handle = (req, res) => {
     const started = Date.now();
     res.on('finish', () => {
       if (process.env.QUIET === '1') return;
@@ -702,9 +741,11 @@ export async function createServer(options = {}) {
         res.on('finish', () => req.destroy());
       }
     });
-  });
+  };
 
-  return { server, store, adminKey: effectiveAdminKey };
+  const server = http.createServer(handle);
+
+  return { server, handle, store, adminKey: effectiveAdminKey };
 }
 
 // --- CLI -------------------------------------------------------------------
