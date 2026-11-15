@@ -167,6 +167,9 @@ export async function runSmoke({ base, adminKey = '', log = console.log, strict 
     }
   }
 
+  // The checks have all been recorded by now; this is what the caller reads.
+  return summarise();
+
   function summarise() {
     const failed = checks.filter((c) => !c.ok);
     const ran = checks.filter((c) => !c.skipped).length;

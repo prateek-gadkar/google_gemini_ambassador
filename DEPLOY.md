@@ -9,9 +9,38 @@ so I built the always-on path that costs ₹0: **Path B, Vercel + a free Supabas
 database.** It preserves self-registration and the admin console, which the
 unlock-code path would have removed.
 
+## It is live
+
+**https://gsa-certificate-site.vercel.app** — free plan, no card, functions
+running in Mumbai, data in Supabase.
+
+Verified on 15 November by a scripted walk of the live site, run from the Vercel
+build machine and printed into the deployment log:
+
+```
+PASS  the site answers — HTTP 200
+PASS  storage is the hosted database — storage: postgres
+PASS  the student page is served — HTTP 200
+PASS  the certificate artwork is reachable — HTTP 200, image/jpeg
+PASS  a student can register — id issued, session token returned
+PASS  a new student is locked
+PASS  the first receipt is accepted — HTTP 200
+PASS  one task of two is still locked
+PASS  the second receipt is accepted — HTTP 200
+PASS  two tasks unlock the certificate
+PASS  a different name is refused — HTTP 403
+SKIP  a certificate is issued — no signature uploaded yet, so the site refuses by design
+PASS  the test registration is removed — HTTP 200
+```
+
+That last SKIP is the only thing standing between the site and a finished
+feature: upload the signature at `/admin`, then open `/calibrate` and press
+**Save and enable**. An unsigned certificate is not a certificate, so the site
+refuses by design until you do.
+
 | Path | Cost | Always on? | Status |
 | --- | --- | --- | --- |
-| **B. Vercel + free Supabase** | ₹0 | **Yes** | **Built and tested. Needs one free account from you.** |
+| **B. Vercel + free Supabase** | ₹0 | **Yes** | **Live and verified end to end — 15 Nov** |
 | A. Share from your own machine | ₹0 | No | Working. Rehearse with it; keep it as the fallback |
 | C. Vercel + unlock codes | ₹0 | Yes | Sketch only. Costs you self-registration |
 | D. Render + a disk | ~$7/mo | Yes | Ruled out — card on file |
@@ -42,7 +71,7 @@ the same certificate renderer, the same admin console, the same 42 checks.
 - `api/index.js` + `vercel.json` at the repository root, so importing this repo
   needs no framework, build or root-directory settings at all.
 
-### Step 1 — the free database (about 5 minutes, only you can do this)
+### Step 1 — the free database (done 15 Nov)
 
 1. Go to **supabase.com** → *Start your project* → sign in with Google. Choose
    the **Free** plan. No card is asked for. Name the project `gsa-certificate`.
@@ -90,25 +119,30 @@ confirm a wrong name gives `403`, download the certificate with the right name,
 and confirm the registration shows up in `/admin`. Then I delete the test
 student.
 
-### Step 3 — one honest caveat
+### Step 3 — what else was checked
 
-The storage code is tested against a mock that speaks the same HTTP contract as
-Supabase, including two instances writing at once and a forced conflict — but a
-mock is not Supabase. **The first real deploy is the test that counts**, and I
-will run it as soon as you send the two values. Do not send the link to 70
-students before I have done that.
+The database itself, from the build log of the same deployment:
 
-**The first deployment needs one click from you** — this is the state as of
-15 November. Everything else is configured; Vercel's API just will not create
-the first deployment of a project without someone confirming the settings in the
-dashboard.
+```
+PASS  key is a secret key — new-style sb_secret_ key
+PASS  reached the table — row present, version 5
+PASS  document readable — 0 registration(s) stored
+PASS  signing secret present
+PASS  write with a version guard — version 5 → 6
+PASS  a second instance sees the same row — version 6
+PASS  unauthenticated read refused — HTTP 401
+database preflight: OK
+```
 
-> **vercel.com → your project `gsa-certificate-site` → Deploy** → pick the branch
-> starting with **`arena/`** → **Deploy**. Change nothing else.
+Two instances reading the same row, a write that is refused if another writer got
+there first, and a table that nobody can read without the key. That is the whole
+storage design, proven on the real service.
 
-That click does double duty: the build runs `app/scripts/preflight.mjs` against
-Supabase and prints the result into the build log, so it is also the real
-database test. After that, every later deployment can be triggered without you.
+**Deployments are done — no clicks needed from you.** The project builds from
+`main`, so if you ever press Deploy in the dashboard it deploys the same code
+that is live now. Do **not** press Redeploy on one of the old failed
+deployments: Vercel rebuilds that deployment's original commit, which is from
+before the deploy was fixed, and it will fail identically every time.
 
 ### What "always on" means here, precisely
 
