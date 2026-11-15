@@ -63,7 +63,7 @@ Set `ADMIN_KEY` in the environment to choose your own.
 Run the tests:
 
 ```bash
-npm test           # 32 checks, including a 70-student concurrency run
+npm test           # 42 checks, including a 70-student concurrency run
 ```
 
 ---
@@ -167,30 +167,39 @@ lock out the room. This was caught by the load test before shipping.
 
 ## Putting it on the real internet
 
-See [`../DEPLOY.md`](../DEPLOY.md) for the full walkthrough. In short, this is a
-long-running Node process that keeps state on disk, so it needs a host with a
-persistent disk — not a serverless platform.
+See [`../DEPLOY.md`](../DEPLOY.md) for the full walkthrough. The hosted,
+always-on setup is **Vercel + a free Supabase Postgres**, which costs nothing and
+needs no card — that is the recommended path.
 
 ```bash
 docker run -p 8080:8080 -v $PWD/data:/var/data \
   -e DATA_DIR=/var/data -e ADMIN_KEY=choose-something certificate-station
 ```
 
-Deployment configs are in the repo already: `render.yaml` (blueprint),
-`app/fly.toml` (volume-based), and `docker-compose.yml` (any VPS).
+Deployment configs are in the repo already: `api/index.js` + `vercel.json` at the
+repository root (Vercel), `render.yaml` (blueprint), `app/fly.toml`
+(volume-based), and `docker-compose.yml` (any VPS).
 
-Two environment variables matter:
+Environment variables:
 
 | Variable | Why |
 | --- | --- |
-| `DATA_DIR` | Where registrations and uploads live. Point it at the mounted disk or data is lost on every deploy. |
+| `DATA_DIR` | Where registrations and uploads live on a host with a disk. Point it at the mounted disk or data is lost on every deploy. On Vercel set it to `/tmp/gsa-data`; nothing durable belongs there. |
 | `ADMIN_KEY` | Your `/admin` key. If unset, one is generated and printed in the logs. |
+| `SUPABASE_URL` | The Supabase project URL. Setting this switches storage from a JSON file to the hosted database. |
+| `SUPABASE_SERVICE_KEY` | The `service_role` key — **not** the `anon` key. It crosses the row-level-security policy the schema installs. |
+| `SUPABASE_TABLE` | Optional. The table holding the document. Defaults to `state`. |
+
+Run `app/db/schema.sql` in Supabase's SQL editor first; it creates the one row
+the site keeps everything in. Without `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` the
+app falls back to a local JSON file, which is right for a laptop or a VPS and
+wrong for a serverless host, where the filesystem is wiped between requests.
 
 `/healthz` returns `{"ok":true}` for the host's health check.
 
 ## What is verified, and what is not
 
-Verified by an automated suite (32 checks), a full pipeline run against the real
+Verified by an automated suite (42 checks), a full pipeline run against the real
 6142 × 4429 artwork, and visual proof renders:
 
 - the gate: one task of two is not enough, a typo is refused, rejection re-locks
