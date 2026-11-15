@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>November Command Center — GSA 2026</title>
+<style>
+  :root{
+    --blue:#1a73e8; --blue-ink:#174ea6; --ink:#202124; --muted:#5f6368;
+    --line:#dadce0; --soft:#f1f3f4; --bg:#fff;
+    --green:#0f9d58; --amber:#f4b400; --red:#d93025; --purple:#9b72cb;
+    --grad:linear-gradient(120deg,#4285f4 0%,#9b72cb 55%,#d96570 100%);
+    --r:14px; --shadow:0 1px 2px rgba(60,64,67,.10),0 2px 8px rgba(60,64,67,.08);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:#f8f9fa;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px;line-height:1.55;
+  }
+  a{color:var(--blue);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 16px 80px}
+
+  /* ---------- header ---------- */
+  header.top{
+    background:var(--bg);border-bottom:1px solid var(--line);
+    padding:22px 16px 18px;margin-bottom:20px;
+  }
+  .top-inner{max-width:1000px;margin:0 auto;display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .brand-eyebrow{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{
+    margin:2px 0 0;font-size:26px;line-height:1.2;letter-spacing:-.02em;font-weight:700;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{color:var(--muted);font-size:13.5px;margin-top:4px}
+  .countdown{text-align:right;min-width:150px}
+  .countdown .num{font-size:34px;font-weight:700;line-height:1;letter-spacing:-.03em}
+  .countdown .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-top:4px}
+  .countdown.urgent .num{color:var(--red)}
+  .countdown.ok .num{color:var(--green)}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:17px;letter-spacing:-.01em}
+  .card h3{margin:20px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .card p{margin:8px 0}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+
+  /* ---------- config ---------- */
+  .cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
+  .field label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .field input,.field select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    font:inherit;font-size:14px;background:#fff;color:var(--ink);
+  }
+  .field input:focus,.field select:focus{outline:2px solid #a8c7fa;border-color:var(--blue)}
+  .hint{font-size:12px;color:var(--muted);margin-top:5px}
+
+  /* ---------- score bar ---------- */
+  .score-row{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .score-big{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1}
+  .score-big span{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0}
+  .bar{height:9px;border-radius:99px;background:var(--soft);overflow:hidden;flex:1;min-width:180px}
+  .bar>i{display:block;height:100%;width:0;background:var(--grad);border-radius:99px;transition:width .35s ease}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+  .chip.on{background:#e6f4ea;color:#137333;border-color:#ceead6}
+  .chip.tier{background:#fef7e0;color:#a05a00;border-color:#feefc3}
+
+  /* ---------- tabs ---------- */
+  nav.tabs{
+    display:flex;gap:6px;overflow-x:auto;padding:4px;background:var(--bg);
+    border:1px solid var(--line);border-radius:99px;margin-bottom:18px;
+    scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{
+    flex:0 0 auto;border:0;background:transparent;font:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);padding:9px 15px;border-radius:99px;cursor:pointer;white-space:nowrap;
+  }
+  nav.tabs button:hover{background:var(--soft)}
+  nav.tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .panel[hidden]{display:none}
+
+  /* ---------- task head ---------- */
+  .taskhead{display:flex;gap:14px;align-items:flex-start;border-left:4px solid var(--blue);padding-left:14px;margin-bottom:6px}
+  .taskhead.p2{border-color:var(--purple)}
+  .taskhead.p3{border-color:var(--green)}
+  .taskhead.p4{border-color:var(--amber)}
+  .pillar{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+  .p2 .pillar{color:var(--purple)}
+  .p3 .pillar{color:#0b8043}
+  .p4 .pillar{color:#b06000}
+  .taskhead h2{font-size:20px;margin:2px 0 2px;letter-spacing:-.02em}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+  .tag{font-size:12px;font-weight:600;padding:4px 9px;border-radius:7px;background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+  .tag.pts{background:#e8f0fe;color:var(--blue-ink);border-color:#d2e3fc}
+  .tag.must{background:#fce8e6;color:#a50e0e;border-color:#fad2cf}
+
+  /* ---------- checklist ---------- */
+  .check-group{margin-top:14px}
+  .check-group>.gtitle{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  ul.check{list-style:none;margin:0;padding:0}
+  ul.check li{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:9px;cursor:pointer;transition:background .12s}
+  ul.check li:hover{background:var(--soft)}
+  ul.check input{
+    appearance:none;-webkit-appearance:none;flex:0 0 auto;width:19px;height:19px;margin:2px 0 0;
+    border:2px solid #bdc1c6;border-radius:5px;cursor:pointer;position:relative;background:#fff;
+  }
+  ul.check input:checked{background:var(--green);border-color:var(--green)}
+  ul.check input:checked::after{
+    content:"";position:absolute;left:5px;top:1.5px;width:5px;height:10px;
+    border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);
+  }
+  ul.check li.done>span{color:var(--muted);text-decoration:line-through}
+  ul.check li>span{flex:1;font-size:14px}
+  ul.check li.warn>span::after{content:" ⚠";color:var(--red);font-size:12px}
+
+  /* ---------- copy blocks ---------- */
+  .block{border:1px solid var(--line);border-radius:12px;margin-top:12px;overflow:hidden;background:#fff}
+  .block-head{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .block-head strong{font-size:13px}
+  .block-head .bhint{font-size:12px;color:var(--muted);flex:1 1 200px}
+  .block pre{
+    margin:0;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+    max-height:340px;overflow:auto;background:#fff;
+  }
+  button.copy{
+    border:1px solid var(--line);background:#fff;color:var(--blue);font:inherit;font-size:12.5px;
+    font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;
+  }
+  button.copy:hover{background:#e8f0fe;border-color:#d2e3fc}
+  button.copy.ok{background:var(--green);border-color:var(--green);color:#fff}
+
+  /* ---------- counter ---------- */
+  .counter{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0 4px;padding:14px;border:1px dashed var(--line);border-radius:12px;background:#fbfcfd}
+  .counter .val{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1;min-width:44px;text-align:center}
+  .counter .cap{font-size:12px;color:var(--muted);text-align:center}
+  .stepper{display:flex;gap:8px}
+  .stepper button{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;
+    font-size:19px;line-height:1;cursor:pointer;color:var(--ink);font-weight:500;
+  }
+  .stepper button:hover{background:var(--soft)}
+  .counter .readout{flex:1;min-width:160px;font-size:13px;color:var(--muted)}
+  .counter .readout b{color:var(--ink);font-size:14px}
+
+  /* ---------- danger ---------- */
+  .danger{border-left:4px solid var(--red);background:#fef7f6}
+  .danger h2{color:#a50e0e}
+  ul.plain{margin:8px 0;padding-left:20px}
+  ul.plain li{margin:6px 0}
+
+  /* ---------- validator ---------- */
+  .validator textarea{
+    width:100%;min-height:120px;padding:11px;border:1px solid var(--line);border-radius:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6;resize:vertical;
+  }
+  .vres{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vitem{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:8px;border:1px solid}
+  .vitem.pass{background:#e6f4ea;color:#137333;border-color:#ceead6}
+  .vitem.fail{background:#fce8e6;color:#a50e0e;border-color:#fad2cf}
+
+  /* ---------- today ---------- */
+  .today{background:linear-gradient(135deg,#e8f0fe,#f3e8fd);border:1px solid #d2e3fc}
+  .today .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-ink)}
+  .today .txt{font-size:16px;font-weight:600;margin-top:6px;line-height:1.45}
+
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:26px 12px 0;line-height:1.7}
+
+  @media (max-width:640px){
+    h1{font-size:21px}
+    .countdown{text-align:left}
+    .countdown .num{font-size:26px}
+    .top-inner{gap:10px}
+    .score-big{font-size:32px}
+    .card{padding:15px;border-radius:12px}
+    ul.check li{padding:8px 4px}
+    .block pre{font-size:11.5px;max-height:280px}
+  }
+  @media print{
+    body{background:#fff}
+    header.top,nav.tabs,button,.counter{display:none!important}
+    .panel[hidden]{display:block!important}
+    .card{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+    .block pre{max-height:none;overflow:visible}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <div class="brand-eyebrow">Google Student Ambassador · India · Semester 2</div>
+      <h1>November Command Center</h1>
+      <div class="sub" id="headline">3 mandatory tasks · 1 booster · everything you need in one place</div>
+    </div>
+    <div class="countdown" id="cdBox">
+      <div class="num" id="cdNum">–</div>
+      <div class="lbl">days to deadline</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ YOUR DETAILS ============ -->
+  <section class="card">
+    <h2>Your details</h2>
+    <p class="small muted">Fill these once. Every caption, prompt and form note on this page updates automatically. Saved in this browser only.</p>
+    <div class="cfg-grid">
+      <div class="field">
+        <label for="cfgName">Your name</label>
+        <input id="cfgName" placeholder="Prateek Gadkar" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="cfgGid">GID (from your welcome email)</label>
+        <input id="cfgGid" placeholder="e.g. GSA26-XXXX" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="cfgCampus">Campus</label>
+        <input id="cfgCampus" placeholder="Your college name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="cfgRegion">Region (picks your hashtag)</label>
+        <select id="cfgRegion">
+          <option value="ns">North / South → #CommuniqueIndia</option>
+          <option value="ew">East / West → #ping_mcn</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cfgGon">Game On Night date</label>
+        <input id="cfgGon" type="date">
+      </div>
+      <div class="field">
+        <label for="cfgSn">Study Notebooks date</label>
+        <input id="cfgSn" type="date">
+      </div>
+    </div>
+    <p class="hint">Not sure of your region? Ask in the official #TeamGemini channel before you post — the hashtag is checked.</p>
+  </section>
+
+  <!-- ============ SCORE ============ -->
+  <section class="card">
+    <h2>Where you stand</h2>
+    <div class="score-row">
+      <div class="score-big" id="scoreNum">0 <span>pts</span></div>
+      <div class="bar"><i id="scoreBar"></i></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <p class="small muted" style="margin-top:14px">
+      Points estimate uses the published rates: 12 per Game On Night participant, 15 per <em>verified</em> Study Notebooks
+      interview, plus 250 for completing all three mandatory tasks. The portal is the source of truth — this is a sanity check.
+    </p>
+  </section>
+
+  <!-- ============ TODAY ============ -->
+  <section class="card today">
+    <div class="lbl">Your move today</div>
+    <div class="txt" id="todayMove">—</div>
+  </section>
+
+  <!-- ============ TABS ============ -->
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="gon">🎮 Game On Night</button>
+    <button role="tab" aria-selected="false" data-tab="reel">🎬 Squad Up reel</button>
+    <button role="tab" aria-selected="false" data-tab="sn">📓 Study Notebooks</button>
+    <button role="tab" aria-selected="false" data-tab="booster">📣 Monthly Highlights</button>
+    <button role="tab" aria-selected="false" data-tab="rules">🚫 Void rules</button>
+  </nav>
+
+  <!-- ================= GAME ON NIGHT ================= -->
+  <div class="panel" id="panel-gon">
+    <section class="card">
+      <div class="taskhead">
+        <div>
+          <div class="pillar">Pillar 1 · Product Trials · Must do</div>
+          <h2>Game On Night: Imagine the Impossible</h2>
+          <div class="small muted">Gen Z lives esports. Be the one who builds the world they'd want to play. One goal, one enemy, one deadline.</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="tag must">MANDATORY</span>
+        <span class="tag pts">12 pts / participant</span>
+        <span class="tag">min 10 · max 100</span>
+        <span class="tag">~60 min session</span>
+      </div>
+
+      <p class="small"><b>Proof to submit:</b> Gemini chat link + Google Doc link + Nano Banana poster, per participant — plus the recorded Meet, pre-survey, feedback form and your Best Entry nomination.</p>
+
+      <div class="counter" data-counter="gon">
+        <div>
+          <div class="val" id="gonCount">0</div>
+          <div class="cap">participants</div>
+        </div>
+        <div class="stepper">
+          <button type="button" data-step="gon:-1" aria-label="remove one">−</button>
+          <button type="button" data-step="gon:1" aria-label="add one">+</button>
+        </div>
+        <div class="readout" id="gonReadout"></div>
+      </div>
+
+      <h3>Before the event</h3>
+      <div class="check-group">
+        <ul class="check" data-task="gon-pre">
+          <li><input type="checkbox"><span>Pick a date and time, then fill the <b>“Book your date and time”</b> form at least 24 hours before the session</span></li>
+          <li><input type="checkbox"><span>Wait for the <b>official Meet link</b> in your mail — never host on your own link</span></li>
+          <li><input type="checkbox"><span>Download the official poster set + slide deck from the November Assets folder</span></li>
+          <li><input type="checkbox"><span>Promote 3 days out, 1 day out and morning-of (WhatsApp groups, class group, IG story, notice board)</span></li>
+          <li><input type="checkbox"><span>Line up <b>15 confirmations</b>, not 10 — no-shows are the #1 reason entries fail the minimum</span></li>
+          <li><input type="checkbox"><span>Build your own sample game doc + poster so you have something to show</span></li>
+          <li><input type="checkbox"><span>Test on your device: Gemini chat, Nano Banana, screen share, and that recording works</span></li>
+          <li><input type="checkbox"><span>Charge laptop + phone, find a quiet spot, keep water nearby</span></li>
+        </ul>
+      </div>
+
+      <h3>On the day</h3>
+      <div class="check-group">
+        <ul class="check" data-task="gon-day">
+          <li class="warn"><input type="checkbox"><span>Hit <b>record before anyone joins</b>. Cameras ON for everyone, for the whole session</span></li>
+          <li class="warn"><input type="checkbox"><span>Record your self-intro on camera: <b>name, designation, campus, GID</b></span></li>
+          <li><input type="checkbox"><span>Drop the pre-survey link in chat and wait until everyone has submitted</span></li>
+          <li><input type="checkbox"><span>Quick walkthrough of Google Play Arena</span></li>
+          <li><input type="checkbox"><span>Read the brief, then live-demo the Gemini prompt live so they see the output</span></li>
+          <li><input type="checkbox"><span>Build time: game doc in Google Docs — name, tagline, mission, enemy, characters, game mode</span></li>
+          <li><input type="checkbox"><span>Poster time in Nano Banana — no text in the visual, no weapons or violence</span></li>
+          <li><input type="checkbox"><span>60-second pitches, one by one</span></li>
+          <li><input type="checkbox"><span>Room votes: Would Play / Wouldn't Play</span></li>
+          <li class="warn"><input type="checkbox"><span>Everyone registers on Google Play Arena — this is part of the task, not optional</span></li>
+          <li class="warn"><input type="checkbox"><span>Feedback form filled before anyone leaves the call</span></li>
+          <li><input type="checkbox"><span>Screenshot the gallery with cameras on + take one group photo</span></li>
+          <li><input type="checkbox"><span>Confirm the people on screen match your registration list, one by one</span></li>
+        </ul>
+      </div>
+
+      <h3>After the event</h3>
+      <div class="check-group">
+        <ul class="check" data-task="gon-post">
+          <li><input type="checkbox"><span>Collect all three artefact links per participant (Gemini chat, Doc, poster) in one sheet</span></li>
+          <li><input type="checkbox"><span>Fill the <b>Nominate the Best Entry</b> form using the rubric below</span></li>
+          <li><input type="checkbox"><span>Submit the event in your portal with the recording + forms</span></li>
+          <li><input type="checkbox"><span>Post a recap story or reel with #TeamGemini</span></li>
+        </ul>
+      </div>
+
+      <h3>Copy-paste: promo message</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>WhatsApp / class group invite</strong>
+          <div class="bhint">Send 3 days out. Short, concrete, one action.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>🎮 GAME ON NIGHT — Google Gemini edition
+
+Imagine the Impossible: build your own original game with Google Gemini.
+
+One goal. One enemy. One deadline.
+You'll design the game world with Gemini, generate a poster of it with Nano Banana, and pitch it to the room in 60 seconds.
+
+📅 {GON_DATE}
+⏰ {GON_TIME}
+📍 Google Meet (link on the day)
+🏆 Best entry gets a certificate + a shot at a Google Pixel
+🎟️ Free to join, no experience needed
+
+Seats capped — reply "IN" and I'll send the link.
+
+— {NAME}, Google Student Ambassador, {CAMPUS}</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Instagram story / status text</strong>
+          <div class="bhint">Pair with an official poster.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>Build a game with Gemini. Pitch it in 60 seconds. 🎮
+
+GAME ON NIGHT · {GON_DATE}
+Link in bio / DM me "IN"
+
+#TeamGemini #GSA2026</pre>
+      </div>
+
+      <h3>Copy-paste: participant prompts</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Gemini prompt — game concept</strong>
+          <div class="bhint">Paste into Gemini chat. Tell participants to save the chat link.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>You are my game design partner. Help me design an original game for the brief "Imagine the Impossible".
+
+Constraints:
+- One goal, one enemy, one deadline
+- Multiplayer mode: solo, duo, squad, or 5v5
+- Absolutely no guns, weapons or violence. Positive, creative, campus-friendly.
+
+Give me:
+1. Game name — 2 to 3 words, memorable
+2. Tagline — one line
+3. The Final Mission — the goal, in 2 sentences
+4. The enemy — who or what, and why they are in the way
+5. 3 to 4 characters, with one line of personality each
+6. Game mode, and how a single round plays out in 60 seconds
+7. Why players would want to jump in
+
+Then write the whole thing as a clean one-page game concept doc with headings, so I can paste it straight into Google Docs.</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Gemini follow-ups that make entries win</strong>
+          <div class="bhint">Rebel robots and city rescues are the default answer. Push.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>The enemy is too generic. Give me 3 stranger, more original options that still fit the brief. Explain in one line why each works.
+
+Sharpen the Final Mission into one sentence a 19-year-old would repeat to a friend.
+
+Now write the 60-second pitch I would say out loud. First person, energetic, not cringe. Keep it under 150 words.</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Nano Banana prompt — game poster</strong>
+          <div class="bhint">Poster must have zero text. Re-roll until the letters are gone.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>Create a bold cinematic poster for an original video game world.
+
+Scene: [one action moment from your game — what is happening right now]
+Characters: [2 to 3 characters — silhouette, colour, posture]
+Enemy: [the enemy, looming or present]
+Setting: [the world — weather, time of day, terrain]
+Style: saturated colour, high contrast, poster-art lighting, dramatic depth of field
+Composition: deliberate empty space at the top and bottom of the frame
+
+Strict rules:
+- NO text, letters, numbers, logos, watermarks or typography anywhere in the image
+- NO guns, weapons, blades or blood
+- Keep it positive, imaginative and campus-friendly</pre>
+      </div>
+
+      <h3>Host run of show · 60 minutes</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Minute-by-minute</strong>
+          <div class="bhint">Print this. It is the whole session.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>0:00  Recording ON. Welcome everyone, cameras on, rename themselves with real names.
+0:03  Self-intro on camera: name, designation, campus, GID. Say it clearly, it gets reviewed.
+0:05  Pre-survey link in chat. Wait in silence until everyone submits.
+0:10  "What is Google Play Arena" — 5 minutes, keep it a story not a spec sheet.
+0:16  Read the brief: one goal, one enemy, one deadline.
+0:19  Live demo: run the Gemini prompt on screen, let them watch the idea appear.
+0:25  Build time. Game doc first, then poster. Play music, roam the call, unblock people.
+0:45  Pitches, 60 seconds each. Strict timer. Applause after each one.
+0:55  Room vote: Would Play / Wouldn't Play. Announce winners.
+0:57  Everyone registers on Google Play Arena. Feedback form before anyone leaves.
+0:59  Group photo with cameras on. Stop recording.</pre>
+      </div>
+
+      <h3>60-second pitch formula</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Give this to participants</strong>
+          <div class="bhint">Reads like a story, not a spec.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>0-10s   THE HOOK — "Imagine you wake up and ___."
+10-25s  THE WORLD + THE ENEMY — what is broken, who broke it
+25-40s  YOUR CHARACTERS + MODE — who do I play as, who do I play with
+40-55s  WHY I'D DROP IN — the feeling, in one sentence
+55-60s  THE LINE — the game name + tagline, said with confidence</pre>
+      </div>
+
+      <h3>Best Entry rubric</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Score each nominee 1–5</strong>
+          <div class="bhint">Nominated winners are manually reviewed. Nominate honestly.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>1. Originality          — would I remember this tomorrow? (avoids rebel-robot / rescue-the-city defaults)
+2. Mission clarity      — one goal, one enemy, writable in a sentence
+3. Poster craft         — striking, zero text in visual, zero weapons
+4. Pitch delivery       — 60 seconds, told as a story, finished on time
+5. Would players drop in — honest room-vote energy
+
+Tie-break: the entry whose three artefacts (chat + doc + poster) are all complete and linkable.</pre>
+      </div>
+
+      <h3>Official assets</h3>
+      <p class="small">
+        <a href="https://drive.google.com/drive/folders/1-XTgKk9aRUTXyCpktKnEzP5Y4QQggCBu" target="_blank" rel="noopener">November Assets folder</a> ·
+        <a href="https://docs.google.com/presentation/d/1kdH_FZx5zz5BQjR_ZhMseLZL7NJ2u7h1o5RIGnv2FqQ/edit" target="_blank" rel="noopener">Game On Night deck</a> ·
+        <a href="https://drive.google.com/drive/folders/1nLLP-MNpH8MqeYBvRhOq22luVwKWhoYi" target="_blank" rel="noopener">Promotional posters</a> ·
+        <a href="https://drive.google.com/file/d/1-znmPzHs6_5nN0twIdYzWFzgYLEx3kwL/view" target="_blank" rel="noopener">Game On poster</a> ·
+        <a href="https://drive.google.com/drive/folders/1MlbJQMgm8CWpp03dKAgHeHCfbMnCMwYB" target="_blank" rel="noopener">All GSA logos</a>
+      </p>
+      <p class="small muted">The booking form, pre-survey, feedback form and Best Entry form live in your ambassador portal and the official channel — they are not in Drive.</p>
+    </section>
+  </div>
+
+  <!-- ================= REEL ================= -->
+  <div class="panel" id="panel-reel" hidden>
+    <section class="card">
+      <div class="taskhead p2">
+        <div>
+          <div class="pillar">Pillar 2 · Content Creation · Must do</div>
+          <h2>Squad Up</h2>
+          <div class="small muted">POV: everyone's looking for a team. You're not. Gemini built your roster before the game even began.</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="tag must">MANDATORY</span>
+        <span class="tag pts">Feature-led reel</span>
+        <span class="tag">20–35 seconds</span>
+        <span class="tag">IG + LinkedIn</span>
+      </div>
+
+      <p class="small"><b>Non-negotiables:</b> your GID in the caption, the three tags, the three mandatory hashtags plus your region hashtag, and you must visibly highlight the Gemini or Google feature you used.</p>
+
+      <h3>Build it</h3>
+      <div class="check-group">
+        <ul class="check" data-task="reel">
+          <li><input type="checkbox"><span>Pick your favourite game and the squad you'd actually want</span></li>
+          <li><input type="checkbox"><span>Run the Gemini prompt below, save the shared chat link</span></li>
+          <li><input type="checkbox"><span>Generate the squad poster in Nano Banana with the team name on it</span></li>
+          <li><input type="checkbox"><span>Film the 0–3s hook: face to camera, casual, no intro</span></li>
+          <li><input type="checkbox"><span>Screen-record the Gemini answers — the feature must be visible, not just described</span></li>
+          <li><input type="checkbox"><span>Cut to the poster and let it land for a beat before cutting away</span></li>
+          <li><input type="checkbox"><span>Add the CTA line out loud + the "tag the AFK teammate" close</span></li>
+          <li><input type="checkbox"><span>Burn in captions — most people watch muted</span></li>
+          <li><input type="checkbox"><span>Optional level-up: Lyria for a squad theme track, or Veo for squad-in-action</span></li>
+          <li class="warn"><input type="checkbox"><span>Paste the final caption into the checker below — GID, 3 tags, 3 hashtags, region hashtag</span></li>
+          <li><input type="checkbox"><span>Post to Instagram <em>and</em> LinkedIn, then keep the links for your portal submission</span></li>
+        </ul>
+      </div>
+
+      <h3>Hook options · first 3 seconds</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Pick one, say it flat</strong>
+          <div class="bhint">Casual beats hyped. Do not explain the video.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>A. "I need a squad that actually knows how to play."
+B. "Everyone's looking for a team. Mine was built before the game loaded."
+C. "My team doesn't exist yet. Gemini made it in 30 seconds."</pre>
+      </div>
+
+      <h3>Shot list</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>30-second cut</strong>
+          <div class="bhint">Two devices or one — screen record then edit together.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>0-3s    HOOK — face to camera, one line, no logo, no intro
+3-7s    "Here's the game I'd pick, and the kind of team I'd want." — props or lobby screenshot
+7-18s   SCREEN RECORD — type the Gemini prompt live, let the roles and team name land
+18-25s  POSTER REVEAL — Nano Banana squad poster, hold the beat, say the team name
+25-30s  CTA — "Google Play Arena is open. Register now. Tag the teammate who's been AFK."</pre>
+      </div>
+
+      <h3>Gemini prompt</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Dream squad builder</strong>
+          <div class="bhint">Don't edit the output on screen — the raw Gemini answer is the proof.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>Help me build my dream squad for [GAME NAME]. Suggest the ideal team roles and a cool team name.
+
+Make it feel like a real roster: give each role a one-line playstyle, say why that person is on my team, and finish with a squad name I'd actually use and a one-line squad motto.</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Nano Banana prompt — squad poster</strong>
+          <div class="bhint">Team name text is allowed here (unlike the Game On poster).</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>Create a simple, bold squad poster for a gaming team.
+
+Team name: [TEAM NAME]
+Motto: [ONE LINE MOTTO]
+Vibe: [e.g. neon esports, streetwear, retro arcade]
+
+Show 4 to 5 character silhouettes or stylised portraits arranged like a team lineup, each in the colour of their role. Big readable team name at the top. Dark background, strong rim light, clean layout.
+
+Keep it positive and campus-friendly. No weapons, no gore.</pre>
+      </div>
+
+      <h3>Caption</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Primary caption — auto-filled</strong>
+          <div class="bhint">Updates with your GID and region from the top of the page.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre id="capMain">—</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Short caption — for a 15s cut</strong>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre id="capShort">—</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>LinkedIn version</strong>
+          <div class="bhint">Longer, reflective. Same tags and hashtags.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre id="capLinkedIn">—</pre>
+      </div>
+
+      <h3>Caption checker</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Paste before you post</strong>
+          <div class="bhint">Catches the mistakes that get a reel disqualified.</div>
+        </div>
+        <div style="padding:12px">
+          <textarea id="capInput" placeholder="Paste your final caption here…"></textarea>
+          <div class="vres" id="capResults"></div>
+        </div>
+      </div>
+
+      <h3>Reply bank</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Comments and DMs</strong>
+          <div class="bhint">Every reply is another person registering.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>"What is Google Play Arena?" → "It's Google's gaming playground for the tournament — free to register, link's in my bio. Go build a squad."
+
+"Which game?" → "Pick your main. Gemini's good at literally any of them — try it with your own and see."
+
+"Did AI make this?" → "Gemini built the roster and Nano Banana made the poster. I did the picking and the trash talk."
+
+"Send link" → "Sent! Tell me your squad name when you register."</pre>
+      </div>
+      <p class="small muted">Official reference: <a href="https://drive.google.com/drive/folders/1Xbd9oSrORtGW0oN9fn7hA_j4Q34MNKBU" target="_blank" rel="noopener">Orientation Session recording</a> · <a href="https://docs.google.com/presentation/d/1O2jgE2THR9uXMqGszCgda98Akl7TYlKFpvCH4i2393Y/edit" target="_blank" rel="noopener">Program Guide Semester 2</a></p>
+    </section>
+  </div>
+
+  <!-- ================= STUDY NOTEBOOKS ================= -->
+  <div class="panel" id="panel-sn" hidden>
+    <section class="card">
+      <div class="taskhead p3">
+        <div>
+          <div class="pillar">Pillar 3 · Product Understanding · Must do</div>
+          <h2>Study Notebooks: One Student. Three Steps. One Sitting.</h2>
+          <div class="small muted">Most students haven't seen any of this. Change that, one conversation at a time.</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="tag must">MANDATORY</span>
+        <span class="tag pts">15 pts / verified participant</span>
+        <span class="tag">min 10 · max 50</span>
+        <span class="tag">750 pts ceiling</span>
+      </div>
+
+      <p class="small"><b>Proof:</b> completed pre-survey + post-survey for every participant, plus the submission form. Both forms = one verified interview. One form = zero points.</p>
+
+      <div class="counter" data-counter="sn">
+        <div>
+          <div class="val" id="snCount">0</div>
+          <div class="cap">verified</div>
+        </div>
+        <div class="stepper">
+          <button type="button" data-step="sn:-1" aria-label="remove one">−</button>
+          <button type="button" data-step="sn:1" aria-label="add one">+</button>
+        </div>
+        <div class="readout" id="snReadout"></div>
+      </div>
+
+      <h3>Setup</h3>
+      <div class="check-group">
+        <ul class="check" data-task="sn-setup">
+          <li class="warn"><input type="checkbox"><span>Pre-survey link open and QR ready on your phone</span></li>
+          <li class="warn"><input type="checkbox"><span>Post-survey link ready — it is a <b>different form</b> from the pre-survey</span></li>
+          <li><input type="checkbox"><span>Build one notebook in advance with your own course material, not a generic topic</span></li>
+          <li><input type="checkbox"><span>Run through all three demos yourself once, end to end</span></li>
+          <li><input type="checkbox"><span>Pick a quiet spot, or block a quiet online slot</span></li>
+          <li><input type="checkbox"><span>Build a list of 13 names, not 10 — people drop out</span></li>
+          <li><input type="checkbox"><span>Skip anyone who already knows Study Notebooks well</span></li>
+        </ul>
+      </div>
+
+      <h3>Each interview · 15–20 min</h3>
+      <div class="check-group">
+        <ul class="check" data-task="sn-run">
+          <li><input type="checkbox"><span>Greet, confirm they have 10–15 minutes</span></li>
+          <li class="warn"><input type="checkbox"><span>Pre-survey filled by <b>them</b>, before you start talking. You never fill it for them</span></li>
+          <li><input type="checkbox"><span>Q1–Q2: surface the pain (how they pick what to study, how they take notes)</span></li>
+          <li><input type="checkbox"><span>Q3: the "would you use it" question</span></li>
+          <li><input type="checkbox"><span>Q4: introduce Study Notebooks</span></li>
+          <li><input type="checkbox"><span>Demo 1 — Create a Notebook with their own material</span></li>
+          <li><input type="checkbox"><span>Demo 2 — Diagnostic Quiz, let them see their gaps appear</span></li>
+          <li><input type="checkbox"><span>Demo 3 — Progress Dashboard: strengths, focus areas, what next</span></li>
+          <li><input type="checkbox"><span>Hand them the device for at least one step</span></li>
+          <li class="warn"><input type="checkbox"><span>Post-survey filled before they leave, with your ambassador GID in it</span></li>
+          <li><input type="checkbox"><span>Save both confirmation screenshots / receipts</span></li>
+          <li><input type="checkbox"><span>Log it in the portal immediately — do not batch it for the 30th</span></li>
+        </ul>
+      </div>
+
+      <h3>Full interview script</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Opening</strong>
+          <div class="bhint">Use as a guide, not a script. Talk naturally.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>YOU: "Hey! I'm {NAME}, Google Student Ambassador for {CAMPUS}. Got a few minutes? I want to show you something that helps you build full-fledged notes for your exams, without the hours it usually takes. Got 10 minutes?"
+
+(wait for yes)
+
+YOU: "Perfect — before we start, can you fill this quick form? Scan the QR here."
+[share pre-survey link — WAIT until they finish]
+
+YOU: "Okay, where are you with exam prep right now? Be honest — on track, a bit behind, or haven't opened the books yet?"</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Q1 – Q4</strong>
+          <div class="bhint">Q1 and Q2 surface the pain. Q3 sums up the need. Q4 is the answer.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>Q1  "When your professor shares the syllabus and a pile of PPTs and PDFs, how do you decide what to study first?"
+
+Q2  "How do you make notes right now — handwritten, typed, borrowing a friend's, screenshotting slides? Which part do you hate the most?"
+
+Q3  "If a tool used your own class material to find your weak units and teach those first, would you use it?"
+
+Q4  "That's close to what Study Notebooks does inside Google Gemini. It works from your own PPTs and notes. Let me show you."</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Demo 1 — Create a Notebook</strong>
+          <div class="bhint">Ask what material they have for their next exam, then use exactly that.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>"First is Create a Notebook. Go to Google Gemini in your browser, open the menu, click New notebook, then Study and Learn."
+
+"Write your project name and idea — for example: 'Marketing Exam Prep: I want to revise the 4Ps of Marketing and Consumer Behaviour before my exam.'"
+
+"Then upload your class notes or PPTs."
+
+Prompt: "Help me study for my exams using my class notes and slides."
+
+(wait for results) "See how much time this saves you."
+
+Watch for: the moment they recognise their own slide deck being used. That is the story.</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Demo 2 — Diagnostic Quiz</strong>
+          <div class="bhint">This is the moment that changes faces. Let it breathe.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>"Now the Diagnostic Quiz. Before your exams, run a quick quiz in the same notebook to spot your syllabus gaps."
+
+Ask: "Honestly — don't you think knowing your gaps first helps you revise better?"
+(wait for their answer)
+
+Show how it marks them strong in some units and weak in others — e.g. strong in the 4Ps, weak in market segmentation.</pre>
+      </div>
+
+      <div class="block">
+        <div class="block-head">
+          <strong>Demo 3 — Progress Dashboard + close</strong>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>"And the last one — the Progress Dashboard. After the lesson, it updates your strengths and focus areas."
+
+Show strengths (e.g. Product and Pricing) and top priorities (e.g. Segmentation and Targeting).
+
+Cue: "It tells you what to study next." (wait for their response)
+
+CLOSE: "So — do you think Study Notebooks would help you with your next exams?" (wait)
+
+"One last thing: please fill this post-survey form."
+[share post-survey link — WAIT until they finish]
+
+"Study Notebooks has way more to explore while you study. Good luck, and thank you!"</pre>
+      </div>
+
+      <h3>Do / don't</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>The difference between 10 verified and 10 rejected</strong>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>DO
+- Show Study Notebooks live on your device, or share your screen
+- Let them try a topic from their own semester
+- Ask follow-ups when they look confused or curious
+- Keep it a conversation, not an interrogation
+- Pick a quiet spot, or a stable quiet call
+
+DON'T
+- Read the questions robotically
+- Fill the forms for them — ever
+- Rush it
+- Interview students who already know Study Notebooks well
+- Count an interview where one form is missing</pre>
+      </div>
+
+      <h3>Participant log</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Copy this into a sheet</strong>
+          <div class="bhint">One row per interview. Verified = both forms ticked.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre># | Name | Course / Semester | Pre-survey ✓ | Post-survey ✓ | Receipt saved | Logged in portal | Notes (their reaction)</pre>
+      </div>
+      <p class="small">
+        Official: <a href="https://docs.google.com/presentation/d/1gODelJeLUrXF5a9jLZNxoX92CThoWEtSSR7jSXyAITY/edit" target="_blank" rel="noopener">Study Notebooks task deck</a> ·
+        <a href="https://drive.google.com/drive/folders/1kMIfA74eTwhtdb3NXB0-6q7PD8BLxeGV" target="_blank" rel="noopener">Study Notebook tutorial</a> ·
+        <a href="https://drive.google.com/drive/folders/1_64yUWcQl3XOriVxHvmYPGSagf6_Aemf" target="_blank" rel="noopener">Product Understanding demo</a>
+      </p>
+    </section>
+  </div>
+
+  <!-- ================= BOOSTER ================= -->
+  <div class="panel" id="panel-booster" hidden>
+    <section class="card">
+      <div class="taskhead p4">
+        <div>
+          <div class="pillar">Booster · Optional · Bonus points</div>
+          <h2>Monthly Highlights</h2>
+          <div class="small muted">One post about your life as a Student Ambassador, on LinkedIn and Instagram.</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="tag">OPTIONAL</span>
+        <span class="tag pts">Bonus points</span>
+        <span class="tag">LI + IG</span>
+      </div>
+
+      <h3>Before you write</h3>
+      <div class="check-group">
+        <ul class="check" data-task="booster">
+          <li><input type="checkbox"><span>Pick two angles from the list — one win, one struggle. That's what reads as real</span></li>
+          <li><input type="checkbox"><span>Pull one photo or screenshot: event grid, poster wall, or you mid-session</span></li>
+          <li><input type="checkbox"><span>Draft below, then paste into the caption checker for GID + hashtags</span></li>
+          <li><input type="checkbox"><span>Post on LinkedIn first, then cross-post to Instagram</span></li>
+          <li><input type="checkbox"><span>Keep the post links for your portal submission</span></li>
+        </ul>
+      </div>
+
+      <h3>The eight angles</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Pick two. Don't use all eight.</strong>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre>🎉 An event or fun night you organised
+🤝 A collaboration or connection you made
+💡 A challenge you overcame
+🚀 A project or initiative you kicked off
+🏆 A win — big or small — from this month
+📚 Something new you learned or explored
+🎬 A behind-the-scenes moment
+🌱 Personal growth as an ambassador</pre>
+      </div>
+
+      <h3>Draft</h3>
+      <div class="block">
+        <div class="block-head">
+          <strong>Monthly Highlights post — auto-filled</strong>
+          <div class="bhint">Fill the three [brackets] with your own words. Everything else is done.</div>
+          <button class="copy" type="button">Copy</button>
+        </div>
+        <pre id="capHighlights">—</pre>
+      </div>
+      <p class="small"><a href="https://drive.google.com/drive/folders/1MlbJQMgm8CWpp03dKAgHeHCfbMnCMwYB" target="_blank" rel="noopener">GSA logos and brand kit</a> — the logo needs clear space equal to the height of the "G". Don't crop it, don't recolour it.</p>
+    </section>
+  </div>
+
+  <!-- ================= RULES ================= -->
+  <div class="panel" id="panel-rules" hidden>
+    <section class="card danger">
+      <h2>What voids an entry</h2>
+      <p class="small">These are enforced, not advisory. Violations mean point deductions, event cancellation or disciplinary action — the exact things that make you miss the welcome kit.</p>
+      <ul class="plain small">
+        <li><b>No recording, or cameras off.</b> If the Meet isn't recorded and faces aren't visible, the session does not count.</li>
+        <li><b>Your own Meet link.</b> You must use the official link. The team can join any session unannounced and cancel it on the spot.</li>
+        <li><b>Moving the date or time.</b> The event must run exactly on the submitted slot. Unannounced changes = zero points.</li>
+        <li><b>Registrations that don't match faces.</b> Your registered list is cross-checked against the recording. Any mismatch invalidates the event.</li>
+        <li><b>Duplicate, fake or recycled links.</b> Every Gemini link is scanned. One bad link rejects the whole group's entries.</li>
+        <li><b>Filling forms for participants.</b> Both Study Notebooks forms must be filled by the participant, not you.</li>
+        <li><b>Missing self-intro.</b> Name, designation, campus and GID, on camera, recorded.</li>
+        <li><b>Nominating a weak "Best Entry".</b> Nominations are manually reviewed against the criteria.</li>
+        <li><b>Text or violence in the game poster.</b> No letters, no weapons. Re-roll the image until it's clean.</li>
+        <li><b>Missing caption elements.</b> GID, all three tags, all three hashtags, plus your region hashtag.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Deadlines and what happens next</h2>
+      <ul class="plain small">
+        <li><b>Submit everything by 30 November 2026.</b> Forms and deliverables for the whole month.</li>
+        <li>Entries are evaluated within about <b>7 days</b> of submission.</li>
+        <li>Rewards dispatch in roughly <b>15 days</b>; delivery partners coordinate over SMS.</li>
+        <li>Missing mandatory tasks for <b>30 consecutive days</b> means disqualification from the programme. No exceptions.</li>
+        <li>Completing all three mandatory tasks and having them verified unlocks <b>Tier 1 — 250 bonus points</b>.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Where the points actually are</h2>
+      <ul class="plain small">
+        <li><b>Game On Night</b> — 12 per participant, 10 minimum, 100 maximum. Highest attendance nationally gets the Play Arena Grand Finale in Mumbai plus a club meet-and-greet.</li>
+        <li><b>Study Notebooks</b> — 15 per verified participant, 10 minimum, 50 maximum, 750 pts ceiling. Both forms or it doesn't count.</li>
+        <li><b>Squad Up reel</b> — a mandatory content task, verified on the required elements.</li>
+        <li><b>Monthly Highlights</b> — booster, up to ₹1,000 extra a month when you hit the Early Completion and Volume criteria.</li>
+        <li><b>Tier 1</b> — 250 pts when all three mandatory tasks are verified.</li>
+      </ul>
+      <p class="small muted">The portal is the source of truth for scoring. If a number here disagrees with the portal, the portal wins.</p>
+    </section>
+  </div>
+
+  <footer>
+    Built from the November Task Guide, the Semester 2 Program Guide and the Study Notebooks task deck.<br>
+    Everything here is a convenience layer — <b>submit through your ambassador portal</b>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEADLINE = new Date("2026-11-30T23:59:59+05:30");
+  var KEY = "gsa-nov-2026-v1";
+
+  var state = {
+    config: { name:"", gid:"", campus:"", region:"ns", gon:"", sn:"" },
+    checks: {},
+    counts: { gon:0, sn:0 }
+  };
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(parsed.config) Object.assign(state.config, parsed.config);
+        if(parsed.checks) state.checks = parsed.checks;
+        if(parsed.counts) Object.assign(state.counts, parsed.counts);
+      }
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function $(s,r){ return (r||document).querySelector(s); }
+  function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+
+  /* ---------- config tokens ---------- */
+  function regionTag(){
+    return state.config.region === "ew" ? "#ping_mcn" : "#CommuniqueIndia";
+  }
+  function fmtDate(v){
+    if(!v) return "[add your date at the top]";
+    var d = new Date(v + "T12:00:00");
+    if(isNaN(d)) return v;
+    return d.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"});
+  }
+  function tokens(txt){
+    var c = state.config;
+    return txt
+      .replace(/\{NAME\}/g, c.name || "[Your Name]")
+      .replace(/\{GID\}/g, c.gid || "[YOUR GID]")
+      .replace(/\{CAMPUS\}/g, c.campus || "[Your Campus]")
+      .replace(/\{REGION\}/g, regionTag())
+      .replace(/\{GON_DATE\}/g, fmtDate(c.gon))
+      .replace(/\{SN_DATE\}/g, fmtDate(c.sn))
+      .replace(/\{GON_TIME\}/g, "[add time]");
+  }
+
+  /* ---------- captions ---------- */
+  var CAP_MAIN =
+  "POV: everyone's looking for a team. You're not. \u{1F3AE}\n\n" +
+  "I picked [GAME] and asked Gemini to build my dream squad \u2014 roles, playstyles, and a team name I'd actually drop into a lobby with. Then Nano Banana turned it into a squad poster.\n\n" +
+  "[One line about what surprised you \u2014 e.g. \"It gave me a support role I'd never have picked, and it was right.\"]\n\n" +
+  "Google Play Arena is open. Register now \u2192 link in bio.\n" +
+  "Tag the teammate who's been AFK with a squad idea in their head. Time to drop in. \u{1F447}\n\n" +
+  "GID: {GID}\n" +
+  "@GoogleIndia @GoogleGemini @GoogleGeminiIndia\n\n" +
+  "#GoogleStudentAmbassador #GSA2026 #TeamGemini {REGION}\n\n" +
+  "Feature used: Gemini for the squad build, Nano Banana for the poster.";
+
+  var CAP_SHORT =
+  "My squad, built by Gemini. \u{1F3AE}\n\n" +
+  "Picked [GAME], asked Gemini for the ideal roster and a team name, then made the poster in Nano Banana.\n\n" +
+  "Google Play Arena is open \u2014 register now. Link in bio.\n\n" +
+  "GID: {GID}\n" +
+  "@GoogleIndia @GoogleGemini @GoogleGeminiIndia\n\n" +
+  "#GoogleStudentAmbassador #GSA2026 #TeamGemini {REGION}";
+
+  var CAP_LINKEDIN =
+  "I don't have a squad. I have a squad Gemini built.\n\n" +
+  "For this month's Google Student Ambassador content task, I picked [GAME] and asked Google Gemini to build my dream team \u2014 every role, every playstyle, and a team name good enough to actually use. I then generated the squad poster with Nano Banana.\n\n" +
+  "The interesting part wasn't the output. It was that Gemini suggested a role I'd never have picked for myself \u2014 and it was right. That's the shift: AI isn't just answering the question you asked, it's proposing the option you didn't think of.\n\n" +
+  "Which is also, honestly, the whole reason Google Play Arena exists. Gamers, you've got the skills \u2014 go register.\n\n" +
+  "GID: {GID}\n" +
+  "@GoogleIndia @GoogleGemini @GoogleGeminiIndia\n\n" +
+  "#GoogleStudentAmbassador #GSA2026 #TeamGemini {REGION}";
+
+  var CAP_HIGHLIGHTS =
+  "Month two as a Google Student Ambassador \u2014 and this one was loud. \u{1F3AE}\n\n" +
+  "I ran Game On Night: Imagine the Impossible at {CAMPUS}. Students joined on Google Meet, cameras on, and built original game worlds with Gemini \u2014 then turned them into posters with Nano Banana in the same sitting. Every single one of them pitched their game in 60 seconds.\n\n" +
+  "\u{1F3C6} The win: [the thing that actually worked \u2014 attendance, a specific entry that stunned the room, the student who said \"wait, do that again\"]\n\n" +
+  "\u{1F4A1} The challenge: [what nearly broke \u2014 a no-show drop-off, a demo that failed, a room that went quiet]\n\n" +
+  "\u{1F331} What I learned: [the honest one \u2014 e.g. people don't need convincing that AI is useful, they need permission to play with it]\n\n" +
+  "I also ran Study Notebooks sessions this month \u2014 watch a student's face when their weak units appear on screen for the first time. That's the moment this programme is actually about.\n\n" +
+  "GID: {GID}\n\n" +
+  "#GoogleStudentAmbassador #MonthlyHighlights #GSA2026 #TeamGemini {REGION}";
+
+  function renderCaptions(){
+    $("#capMain").textContent = tokens(CAP_MAIN);
+    $("#capShort").textContent = tokens(CAP_SHORT);
+    $("#capLinkedIn").textContent = tokens(CAP_LINKEDIN);
+    $("#capHighlights").textContent = tokens(CAP_HIGHLIGHTS);
+    validate();
+  }
+
+  /* ---------- validator ---------- */
+  function validate(){
+    var val = $("#capInput").value || "";
+    var low = val.toLowerCase();
+    var c = state.config;
+    var checks = [
+      { name:"Your GID", ok: c.gid ? val.indexOf(c.gid) !== -1 : /GID\s*[:#]?\s*\S+/i.test(val) },
+      { name:"@GoogleIndia", ok: low.indexOf("@googleindia") !== -1 },
+      { name:"@GoogleGemini", ok: low.indexOf("@googlegemini") !== -1 },
+      { name:"@GoogleGeminiIndia", ok: low.indexOf("@googlegeminiindia") !== -1 },
+      { name:"#GoogleStudentAmbassador", ok: low.indexOf("#googlestudentambassador") !== -1 },
+      { name:"#GSA2026", ok: low.indexOf("#gsa2026") !== -1 },
+      { name:"#TeamGemini", ok: low.indexOf("#teamgemini") !== -1 },
+      { name:regionTag(), ok: low.indexOf(regionTag().toLowerCase()) !== -1 }
+    ];
+    var box = $("#capResults");
+    box.innerHTML = "";
+    if(!val.trim()){
+      box.innerHTML = '<span class="vitem" style="background:#f1f3f4;color:#5f6368;border-color:#dadce0">Paste a caption to check it</span>';
+      return;
+    }
+    checks.forEach(function(ch){
+      var s = document.createElement("span");
+      s.className = "vitem " + (ch.ok ? "pass" : "fail");
+      s.textContent = (ch.ok ? "\u2713 " : "\u2717 ") + ch.name;
+      box.appendChild(s);
+    });
+    var pass = checks.filter(function(ch){ return ch.ok; }).length;
+    var tot = document.createElement("span");
+    tot.className = "vitem " + (pass === checks.length ? "pass" : "fail");
+    tot.textContent = pass + " / " + checks.length + " required elements";
+    box.appendChild(tot);
+  }
+
+  /* ---------- checklist ---------- */
+  function initChecks(){
+    $$("ul.check").forEach(function(ul){
+      var task = ul.getAttribute("data-task");
+      $$("li", ul).forEach(function(li, i){
+        var id = task + ":" + i;
+        var cb = $("input", li);
+        if(state.checks[id]){
+          cb.checked = true;
+          li.classList.add("done");
+        }
+        cb.addEventListener("change", function(){
+          state.checks[id] = cb.checked;
+          li.classList.toggle("done", cb.checked);
+          save(); renderProgress();
+        });
+      });
+    });
+  }
+
+  /* ---------- counters ---------- */
+  function initCounters(){
+    $$("[data-step]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-step").split(":");
+        var which = parts[0], delta = parseInt(parts[1], 10);
+        var max = which === "gon" ? 100 : 50;
+        state.counts[which] = Math.max(0, Math.min(max, state.counts[which] + delta));
+        save(); renderCounters(); renderProgress();
+      });
+    });
+  }
+
+  function renderCounters(){
+    var gon = state.counts.gon, sn = state.counts.sn;
+    $("#gonCount").textContent = gon;
+    $("#snCount").textContent = sn;
+
+    var gonTxt;
+    if(gon === 0) gonTxt = "<b>0 pts</b> — you need at least <b>10</b> participants to unlock anything.";
+    else if(gon < 10) gonTxt = "<b>" + (gon*12) + " pts</b> so far — <b>" + (10-gon) + " more</b> to hit the minimum of 10.";
+    else gonTxt = "<b>" + (gon*12) + " pts</b> from this task. " + (gon < 100 ? "Room for " + (100-gon) + " more." : "At the ceiling.");
+    $("#gonReadout").innerHTML = gonTxt;
+
+    var snTxt;
+    if(sn === 0) snTxt = "<b>0 pts</b> — <b>10 verified</b> interviews is the minimum, and both forms must be in.";
+    else if(sn < 10) snTxt = "<b>" + (sn*15) + " pts</b> so far — <b>" + (10-sn) + " more</b> to unlock the points.";
+    else snTxt = "<b>" + (sn*15) + " pts</b> banked. Ceiling is 50 verified / 750 pts.";
+    $("#snReadout").innerHTML = snTxt;
+  }
+
+  /* ---------- progress ---------- */
+  function taskDone(task){
+    var ids = Object.keys(state.checks).filter(function(k){ return k.indexOf(task) === 0; });
+    if(!ids.length) return false;
+    return ids.every(function(k){ return state.checks[k]; });
+  }
+
+  function renderProgress(){
+    var gon = state.counts.gon, sn = state.counts.sn;
+    var mandatoryGon = gon >= 10;
+    var mandatorySn = sn >= 10;
+    var mandatoryReel = taskDone("reel");
+    var points = (mandatoryGon ? gon*12 : 0) + (mandatorySn ? sn*15 : 0);
+    var tier1 = mandatoryGon && mandatorySn && mandatoryReel;
+    if(tier1) points += 250;
+
+    $("#scoreNum").innerHTML = points.toLocaleString("en-IN") + ' <span>pts</span>';
+    var pct = Math.min(100, Math.round(points / 2000 * 100));
+    $("#scoreBar").style.width = pct + "%";
+
+    var chips = [];
+    function chip(label, on, extra){
+      return '<span class="chip ' + (on ? (extra || "on") : "") + '">' + label + '</span>';
+    }
+    chips.push(chip((mandatoryGon ? "\u2713 " : "") + "Product Trials" + (mandatoryGon ? " · " + gon : " · " + gon + "/10"), mandatoryGon));
+    chips.push(chip((mandatorySn ? "\u2713 " : "") + "Product Understanding" + (mandatorySn ? " · " + sn : " · " + sn + "/10"), mandatorySn));
+    chips.push(chip((mandatoryReel ? "\u2713 " : "") + "Content Creation", mandatoryReel));
+    chips.push(chip((tier1 ? "\u2713 " : "") + "Tier 1 bonus +250", tier1, "tier"));
+    $("#chips").innerHTML = chips.join("");
+
+    renderToday(tier1);
+  }
+
+  /* ---------- headline + countdown ---------- */
+  function renderClock(){
+    var now = new Date();
+    var ms = DEADLINE - now;
+    var days = Math.ceil(ms / 86400000);
+    var box = $("#cdBox"), num = $("#cdNum");
+    if(ms <= 0){
+      num.textContent = "0";
+      $(".lbl", box).textContent = "deadline passed";
+      box.className = "countdown urgent";
+    } else {
+      num.textContent = days;
+      box.className = "countdown " + (days <= 7 ? "urgent" : "ok");
+    }
+    var done = taskDone("reel") + (state.counts.gon >= 10) + (state.counts.sn >= 10);
+    $("#headline").textContent = done + " of 3 mandatory tasks cleared · " + days + " days left";
+  }
+
+  /* ---------- today ---------- */
+  function renderToday(tier1){
+    var c = state.config;
+    var msg;
+    if(!c.gid){
+      msg = "Add your GID at the top of this page first — every caption, form and submission needs it, and it's the single most common thing people forget.";
+    } else if(state.counts.gon === 0 && !c.gon){
+      msg = "Book your Game On Night date and time. The form needs to be in at least 24 hours before the session, and your official Meet link arrives by mail after that.";
+    } else if(state.counts.gon === 0){
+      msg = "Your Game On Night is set for " + fmtDate(c.gon) + ". Send the WhatsApp invite today and start the confirmation list — you want 15 yeses, not 10.";
+    } else if(state.counts.sn === 0){
+      msg = "Game On Night is counted. Now start Study Notebooks interviews — 15 to 20 minutes each, 10 verified minimum, and every one needs both forms.";
+    } else if(!taskDone("reel")){
+      msg = "Product tasks are moving. Ship the Squad Up reel — hook, Gemini screen record, poster reveal, CTA. Verify the caption before you post.";
+    } else if(!tier1){
+      msg = "Two tasks done plus the reel. You're one verification away from the 250 point Tier 1 bonus — check the portal status on both submissions.";
+    } else {
+      msg = "All three mandatory tasks are cleared. Post your Monthly Highlights for the booster, then sit back and let the welcome kit ship.";
+    }
+    $("#todayMove").textContent = msg;
+  }
+
+  /* ---------- tabs ---------- */
+  function initTabs(){
+    $$("nav.tabs button").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        $$("nav.tabs button").forEach(function(b){ b.setAttribute("aria-selected","false"); });
+        btn.setAttribute("aria-selected","true");
+        var which = btn.getAttribute("data-tab");
+        $$(".panel").forEach(function(p){ p.hidden = true; });
+        var panel = document.getElementById("panel-" + which);
+        if(panel) panel.hidden = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+  }
+
+  /* ---------- copy ---------- */
+  function initCopy(){
+    $$("button.copy").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var block = btn.closest(".block");
+        var pre = $("pre", block);
+        if(!pre) return;
+        var text = pre.textContent;
+        var done = function(){
+          btn.textContent = "Copied";
+          btn.classList.add("ok");
+          setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1600);
+        };
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else { fallback(); }
+        function fallback(){
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand("copy"); }catch(e){}
+          document.body.removeChild(ta);
+          done();
+        }
+      });
+    });
+  }
+
+  /* ---------- config wiring ---------- */
+  function initConfig(){
+    var map = { cfgName:"name", cfgGid:"gid", cfgCampus:"campus", cfgRegion:"region", cfgGon:"gon", cfgSn:"sn" };
+    Object.keys(map).forEach(function(id){
+      var el = document.getElementById(id);
+      var field = map[id];
+      el.value = state.config[field] || "";
+      el.addEventListener("input", function(){
+        state.config[field] = el.value;
+        save(); renderCaptions(); renderProgress(); renderClock();
+      });
+      el.addEventListener("change", function(){
+        state.config[field] = el.value;
+        save(); renderCaptions(); renderProgress(); renderClock();
+      });
+    });
+  }
+
+  /* ---------- boot ---------- */
+  load();
+  initConfig();
+  initChecks();
+  initCounters();
+  initTabs();
+  initCopy();
+  $("#capInput").addEventListener("input", validate);
+  renderCaptions();
+  renderCounters();
+  renderProgress();
+  renderClock();
+})();
+</script>
+</body>
+</html>
