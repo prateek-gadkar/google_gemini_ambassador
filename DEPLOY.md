@@ -66,6 +66,13 @@ the same certificate renderer, the same admin console, the same 42 checks.
 > the server needs. Do not paste it into the group chat, and do not put it in the
 > website's own code. It belongs only in Vercel's environment settings.
 
+**Done already (15 Nov):** the Vercel project `gsa-certificate-site` exists, the
+GitHub repo is linked to it, and `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`,
+`ADMIN_KEY` and `DATA_DIR` are set as encrypted environment variables. Only the
+first deployment is left, and that one needs a click from you (below), because
+Vercel's API refuses to create the very first deployment of a project without
+interactive settings.
+
 ### Step 2 — what I do with them
 
 I set four environment variables on the Vercel project and deploy:
@@ -91,9 +98,17 @@ mock is not Supabase. **The first real deploy is the test that counts**, and I
 will run it as soon as you send the two values. Do not send the link to 70
 students before I have done that.
 
-If Vercel's API refuses the very first deployment for this project, the fix is
-one click for you: **vercel.com → Add New → Project → Import** this GitHub repo
-→ *Deploy*. No settings to change, still ₹0. I will tell you if it comes to that.
+**The first deployment needs one click from you** — this is the state as of
+15 November. Everything else is configured; Vercel's API just will not create
+the first deployment of a project without someone confirming the settings in the
+dashboard.
+
+> **vercel.com → your project `gsa-certificate-site` → Deploy** → pick the branch
+> starting with **`arena/`** → **Deploy**. Change nothing else.
+
+That click does double duty: the build runs `app/scripts/preflight.mjs` against
+Supabase and prints the result into the build log, so it is also the real
+database test. After that, every later deployment can be triggered without you.
 
 ### What "always on" means here, precisely
 

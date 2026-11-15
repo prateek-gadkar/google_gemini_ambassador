@@ -55,6 +55,29 @@ async function main() {
   // Never print the key. The project URL is public and safe to show.
   console.log(`checking ${url.trim().replace(/\/+$/, '')} → table "${table}"`);
 
+  // A publishable (anon) key is the easy mistake to make, and it fails in a way
+  // that looks like a broken app rather than a wrong key. Catch it by name.
+  if (key.startsWith('sb_publishable_')) {
+    fail('key is a secret key', 'that is the publishable key; use the secret / service_role key');
+    return finish();
+  } else if (key.startsWith('sb_secret_')) {
+    pass('key is a secret key', 'new-style sb_secret_ key');
+  } else if (key.startsWith('eyJ')) {
+    let role = '';
+    try {
+      role = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8')).role || '';
+    } catch {
+      role = '';
+    }
+    if (role === 'anon') {
+      fail('key is a secret key', 'that token has role "anon"; the secret / service_role key is needed');
+      return finish();
+    }
+    pass('key is a secret key', role ? `token role "${role}"` : 'token');
+  } else {
+    note('key is a secret key', 'unrecognised format, trying it anyway');
+  }
+
   let store;
   try {
     store = await new RestStore({ url, key, table }).init();
@@ -115,6 +138,34 @@ async function main() {
     }
   } catch (err) {
     note('unauthenticated read refused', `not checked — ${err.message}`);
+  }
+
+  // The site that is live right now — not this build, the previous deployment.
+  // Vercel hands the build a production URL; the first deploy has none.
+  const smokeBase = (
+    process.env.SMOKE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : '')
+  ).replace(/\/+$/, '');
+
+  if (!smokeBase) {
+    note('live site check', 'no production URL yet, so this is the first deployment');
+  } else {
+    console.log(`\nchecking the live site at ${smokeBase}`);
+    try {
+      const { runSmoke } = await import('./smoke.mjs');
+      const result = await runSmoke({
+        base: smokeBase,
+        adminKey: process.env.ADMIN_KEY || '',
+      });
+      if (!result.ok) {
+        if (process.env.SMOKE_STRICT === '1') fail('live site', 'the checks above found problems');
+        else note('live site', 'problems found, but not fatal — fix forward with another deploy');
+      }
+    } catch (err) {
+      note('live site check', `could not run — ${err.message}`);
+    }
   }
 
   finish();

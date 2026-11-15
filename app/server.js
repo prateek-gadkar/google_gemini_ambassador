@@ -571,6 +571,21 @@ export async function createServer(options = {}) {
       return res.end(buf);
     }
 
+    // Removing a registration. Needed for a typo, a duplicate, and for the
+    // deployment smoke test, which should leave no trace of itself.
+    match = route.match(/^\/api\/admin\/students\/([\w-]+)$/);
+    if (match && method === 'DELETE') {
+      requireAdmin(req);
+      const removed = await store.mutate((data) => {
+        const target = data.students[match[1]];
+        if (!target) return null;
+        delete data.students[match[1]];
+        return target;
+      });
+      if (!removed) throw badRequest('not_found', 404);
+      return sendJson(res, 200, { removed: true, id: removed.id, name: removed.name });
+    }
+
     if (route === '/api/admin/signature' && method === 'POST') {
       requireAdmin(req);
       const raw = await readBody(req, MAX_TEMPLATE_BYTES);

@@ -671,3 +671,34 @@ test('booting on a serverless host with no database warns instead of failing sil
     if (server) await new Promise((resolve) => server.close(resolve));
   }
 });
+
+// ---------------------------------------------------------------------------
+test('an admin can remove a registration, and nobody else can', async () => {
+  await withServer(async ({ base, admin }) => {
+    const reg = await admin.request('/api/register', {
+      method: 'POST',
+      json: { name: 'Smoke Test', email: 'smoke@example.com', campus: 'Test' },
+    });
+    assert.equal(reg.status, 201);
+    const id = reg.body.student.id;
+
+    const asStudent = await admin.request(`/api/admin/students/${id}`, { method: 'DELETE' });
+    assert.equal(asStudent.status, 403, 'a student session must not remove anyone');
+
+    const unknown = await admin.request('/api/admin/students/nope-nope', {
+      method: 'DELETE',
+      headers: adminHeaders,
+    });
+    assert.equal(unknown.status, 404, 'removing something that is not there is a 404');
+
+    const removed = await admin.request(`/api/admin/students/${id}`, {
+      method: 'DELETE',
+      headers: adminHeaders,
+    });
+    assert.equal(removed.status, 200);
+    assert.equal(removed.body.removed, true);
+
+    const list = await admin.request('/api/admin/students', { headers: adminHeaders });
+    assert.equal(list.body.stats.total, 0, 'the roster is back to empty');
+  });
+});
