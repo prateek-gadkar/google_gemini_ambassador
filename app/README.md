@@ -63,7 +63,7 @@ Set `ADMIN_KEY` in the environment to choose your own.
 Run the tests:
 
 ```bash
-npm test           # 42 checks, including a 70-student concurrency run
+npm test           # 44 checks, including a 70-student concurrency run
 ```
 
 ---
@@ -199,7 +199,7 @@ wrong for a serverless host, where the filesystem is wiped between requests.
 
 ## What is verified, and what is not
 
-Verified by an automated suite (42 checks), a full pipeline run against the real
+Verified by an automated suite (44 checks), a full pipeline run against the real
 6142 × 4429 artwork, and visual proof renders:
 
 - the gate: one task of two is not enough, a typo is refused, rejection re-locks

@@ -638,3 +638,36 @@ test('oversized receipt bodies are refused', async () => {
     assert.ok(res.status === 413 || res.status === 400, `expected refusal, got ${res.status}`);
   });
 });
+
+// ---------------------------------------------------------------------------
+test('health reports which storage is in use', async () => {
+  await withServer(async ({ base }) => {
+    const health = await (await fetch(base + '/healthz')).json();
+    assert.equal(health.storage, 'file');
+    const api = await (await fetch(base + '/api/health')).json();
+    assert.equal(api.storage, 'file');
+  });
+});
+
+test('booting on a serverless host with no database warns instead of failing silently', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-data-'));
+  const assetsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-assets-'));
+  const original = console.error;
+  const lines = [];
+  console.error = (...args) => lines.push(args.join(' '));
+  const previous = process.env.VERCEL;
+  process.env.VERCEL = '1';
+  let server;
+  try {
+    const started = await createServer({ dataDir, assetsDir, adminKey: ADMIN_KEY });
+    server = started.server;
+    // The warning belongs at boot, before anyone can register into the void.
+    assert.match(lines.join('\n'), /WILL be lost/);
+    assert.equal(started.storage, 'file');
+  } finally {
+    console.error = original;
+    if (previous === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previous;
+    if (server) await new Promise((resolve) => server.close(resolve));
+  }
+});

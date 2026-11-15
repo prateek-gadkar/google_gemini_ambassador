@@ -167,6 +167,18 @@ export async function createServer(options = {}) {
         }).init()
       : await new Store(path.join(dataDir, 'gsa.json')).init());
   const isRemote = typeof store.refresh === 'function';
+  const storage = isRemote ? 'postgres' : 'file';
+
+  // A serverless host throws its filesystem away between requests. Running
+  // there with file storage means registrations vanish at random — silent, and
+  // fatal on the day. Say it loudly instead of hoping someone notices.
+  if (!isRemote && process.env.VERCEL) {
+    console.error(
+      'WARNING: no database configured on a serverless host. ' +
+        'SUPABASE_URL and SUPABASE_SERVICE_KEY are not both set, so registrations ' +
+        'are being written to a throwaway filesystem and WILL be lost. Set both.'
+    );
+  }
 
   // A stable fallback admin key so the console still works after a restart
   // when no ADMIN_KEY is configured.
@@ -256,12 +268,13 @@ export async function createServer(options = {}) {
 
     // ---- student account ---------------------------------------------------
     if (route === '/healthz' && method === 'GET') {
-      return sendJson(res, 200, { ok: true });
+      return sendJson(res, 200, { ok: true, storage });
     }
 
     if (route === '/api/health' && method === 'GET') {
       return sendJson(res, 200, {
         ok: true,
+        storage,
         students: store.read((d) => Object.keys(d.students).length),
         templateReady: store.read((d) => !!d.certConfig.templateReady),
       });
@@ -745,7 +758,7 @@ export async function createServer(options = {}) {
 
   const server = http.createServer(handle);
 
-  return { server, handle, store, adminKey: effectiveAdminKey };
+  return { server, handle, store, adminKey: effectiveAdminKey, storage };
 }
 
 // --- CLI -------------------------------------------------------------------
