@@ -10,7 +10,8 @@ import { Store, newId, certSerial, normaliseName } from './lib/store.js';
 import {
   sessionCookie,
   clearCookie,
-  studentIdFromRequest,
+  tokenFromRequest,
+  signSession,
   isAdmin,
 } from './lib/auth.js';
 import { sendJson, sendText, readJson, readBody, serveStatic } from './lib/http.js';
@@ -206,9 +207,17 @@ export async function createServer(options = {}) {
     );
   }
 
+  /** True when the request arrived over TLS (directly or via the proxy). */
+  function isHttps(req) {
+    return (
+      req.headers['x-forwarded-proto'] === 'https' ||
+      Boolean(req.socket && req.socket.encrypted)
+    );
+  }
+
   function requireStudent(req) {
     const secret = store.read((d) => d.secret);
-    const id = studentIdFromRequest(secret, req);
+    const id = tokenFromRequest(secret, req);
     if (!id) throw badRequest('not_signed_in', 401);
     const student = store.read((d) => d.students[id]);
     if (!student) throw badRequest('not_signed_in', 401);
@@ -275,8 +284,8 @@ export async function createServer(options = {}) {
       return sendJson(
         res,
         201,
-        { student: publicStudent(created) },
-        { 'Set-Cookie': sessionCookie(secret, created.id) }
+        { student: publicStudent(created), token: signSession(secret, created.id) },
+        { 'Set-Cookie': sessionCookie(secret, created.id, { secure: isHttps(req) }) }
       );
     }
 
@@ -293,8 +302,8 @@ export async function createServer(options = {}) {
       return sendJson(
         res,
         200,
-        { student: publicStudent(student) },
-        { 'Set-Cookie': sessionCookie(secret, student.id) }
+        { student: publicStudent(student), token: signSession(secret, student.id) },
+        { 'Set-Cookie': sessionCookie(secret, student.id, { secure: isHttps(req) }) }
       );
     }
 
@@ -304,7 +313,7 @@ export async function createServer(options = {}) {
 
     if (route === '/api/me' && method === 'GET') {
       const secret = store.read((d) => d.secret);
-      const id = studentIdFromRequest(secret, req);
+      const id = tokenFromRequest(secret, req);
       const student = id ? store.read((d) => d.students[id]) : null;
       return sendJson(res, 200, {
         signedIn: !!student,

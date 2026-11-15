@@ -448,6 +448,87 @@ test('login works for a registered email and fails for an unknown one', async ()
   });
 });
 
+test('a browser that refuses cookies still stays signed in', async () => {
+  // Exactly the preview-iframe and blocked-third-party-cookie case: no cookie
+  // is ever stored or sent, only the Bearer token from the response body.
+  await withServer(async ({ base }) => {
+    const reg = await fetch(base + '/api/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Ananya Sharma', email: 'a@campus.edu' }),
+    });
+    const regBody = await reg.json();
+    assert.equal(reg.status, 201);
+    assert.ok(regBody.token, 'registration returns a token');
+    assert.ok(reg.headers.get('set-cookie'), 'the cookie is still offered as a fallback');
+
+    const auth = { authorization: 'Bearer ' + regBody.token };
+
+    // No cookie header at all from here on.
+    const me = await fetch(base + '/api/me', { headers: auth });
+    const meBody = await me.json();
+    assert.equal(meBody.signedIn, true, 'the token alone identifies the student');
+    assert.equal(meBody.student.name, 'Ananya Sharma');
+
+    const receipt = await fetch(base + '/api/tasks/pre/receipt', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ receipt: 'pre done' }),
+    });
+    assert.equal(receipt.status, 200);
+
+    const post = await fetch(base + '/api/tasks/post/receipt', {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ receipt: 'post done' }),
+    });
+    assert.equal((await post.json()).student.unlocked, true);
+
+    // Sign in on a fresh "browser": token comes back again.
+    const login = await fetch(base + '/api/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'a@campus.edu' }),
+    });
+    const loginBody = await login.json();
+    assert.ok(loginBody.token);
+    const me2 = await (await fetch(base + '/api/me', {
+      headers: { authorization: 'Bearer ' + loginBody.token },
+    })).json();
+    assert.equal(me2.signedIn, true);
+    assert.equal(me2.student.unlocked, true, 'task state survives the re-login');
+  });
+});
+
+test('a forged or tampered bearer token is not accepted', async () => {
+  await withServer(async ({ base }) => {
+    const res = await fetch(base + '/api/me', { headers: { authorization: 'Bearer made.up' } });
+    const body = await res.json();
+    assert.equal(body.signedIn, false);
+
+    const reg = await fetch(base + '/api/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Ananya Sharma', email: 'a@campus.edu' }),
+    });
+    const token = (await reg.json()).token;
+    const [body64] = token.split('.');
+    const forged = Buffer.from(JSON.stringify({ s: 'someone-else', exp: Date.now() + 1e9 }))
+      .toString('base64url');
+
+    const tampered = await (await fetch(base + '/api/me', {
+      headers: { authorization: 'Bearer ' + forged + '.' + token.split('.')[1] },
+    })).json();
+    assert.equal(tampered.signedIn, false, 'payload swap rejected');
+
+    const good = await (await fetch(base + '/api/me', {
+      headers: { authorization: 'Bearer ' + token },
+    })).json();
+    assert.equal(good.signedIn, true);
+    assert.ok(body64.length > 0);
+  });
+});
+
 test('students cannot reach another student’s screenshot', async () => {
   await withServer(async ({ base }) => {
     const first = makeClient(base);

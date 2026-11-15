@@ -2,6 +2,31 @@
 
 var state = { me: null };
 
+// ---------------------------------------------------------------------------
+// Session handling.
+//
+// Cookies are not reliable here: the site is often shown inside a frame on a
+// different site, where browsers treat the session cookie as third-party and
+// drop it. The server therefore also returns a signed token, which we keep in
+// memory and send as a Bearer header. Memory is the source of truth; storage is
+// only used so a reload does not sign the student out.
+// ---------------------------------------------------------------------------
+var SESSION_KEY = 'gsa-session-token';
+var session = { token: null };
+
+function loadToken() {
+  try { session.token = window.localStorage.getItem(SESSION_KEY) || null; }
+  catch (err) { session.token = null; }
+}
+
+function saveToken(token) {
+  session.token = token || null;
+  try {
+    if (token) window.localStorage.setItem(SESSION_KEY, token);
+    else window.localStorage.removeItem(SESSION_KEY);
+  } catch (err) { /* private mode, framed storage: memory only */ }
+}
+
 function $(id) { return document.getElementById(id); }
 
 function el(tag, props, children) {
@@ -24,16 +49,17 @@ function el(tag, props, children) {
 
 function api(path, options) {
   var opts = options || {};
+  var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (session.token) headers.Authorization = 'Bearer ' + session.token;
+
   return fetch(path, {
     method: opts.method || 'GET',
-    headers: Object.assign(
-      { 'Content-Type': 'application/json' },
-      opts.headers || {}
-    ),
+    headers: headers,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     credentials: 'same-origin',
   }).then(function (res) {
     return res.json().catch(function () { return {}; }).then(function (data) {
+      if (res.status === 401) saveToken(null);
       if (!res.ok) throw new Error(data.error || 'Request failed (' + res.status + ')');
       return data;
     });
@@ -311,7 +337,18 @@ $('formRegister').addEventListener('submit', function (event) {
       campus: $('regCampus').value.trim(),
     },
   })
-    .then(function () { return refresh(); })
+    .then(function (data) {
+      saveToken(data.token);
+      return refresh();
+    })
+    .then(function (me) {
+      if (!me.signedIn) {
+        saveToken(null);
+        setMsg(msg, 'Registered, but this browser did not keep the session. Try signing in.', 'err');
+      } else {
+        setMsg(msg, '');
+      }
+    })
     .catch(function (err) { setMsg(msg, err.message, 'err'); })
     .then(function () { btn.disabled = false; });
 });
@@ -326,7 +363,18 @@ $('formLogin').addEventListener('submit', function (event) {
     method: 'POST',
     body: { email: $('loginEmail').value.trim() },
   })
-    .then(function () { return refresh(); })
+    .then(function (data) {
+      saveToken(data.token);
+      return refresh();
+    })
+    .then(function (me) {
+      if (!me.signedIn) {
+        saveToken(null);
+        setMsg(msg, 'Sign-in reached the server but this browser dropped the session. Please try again.', 'err');
+      } else {
+        setMsg(msg, '');
+      }
+    })
     .catch(function (err) { setMsg(msg, err.message, 'err'); })
     .then(function () { btn.disabled = false; });
 });
@@ -342,10 +390,14 @@ $('btnShowRegister').addEventListener('click', function () {
 
 $('btnSignOut').addEventListener('click', function () {
   api('/api/logout', { method: 'POST' })
-    .then(function () { return refresh(); })
-    .catch(function () { return refresh(); });
+    .catch(function () { /* sign out locally regardless */ })
+    .then(function () {
+      saveToken(null);
+      return refresh();
+    });
 });
 
+loadToken();
 refresh().catch(function (err) {
   document.body.insertAdjacentHTML(
     'afterbegin',

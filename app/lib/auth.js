@@ -41,10 +41,38 @@ export function verifySession(secret, token, now = Date.now()) {
   return payload.s;
 }
 
-export function sessionCookie(secret, studentId) {
-  return `${COOKIE}=${signSession(secret, studentId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(
-    TTL_MS / 1000
-  )}`;
+/**
+ * Builds the session cookie.
+ *
+ * `secure` switches to SameSite=None; Secure, which is what a cross-site
+ * iframe needs (the preview host frames this app from another site). A Lax
+ * cookie is silently dropped in that context, which looks exactly like "it
+ * says signing in and never proceeds".
+ */
+export function sessionCookie(secret, studentId, opts = {}) {
+  const attrs = opts.secure
+    ? '; Path=/; HttpOnly; SameSite=None; Secure'
+    : '; Path=/; HttpOnly; SameSite=Lax';
+  return `${COOKIE}=${signSession(secret, studentId)}${attrs}; Max-Age=${Math.floor(TTL_MS / 1000)}`;
+}
+
+/**
+ * Reads the session from either an Authorization: Bearer header or the cookie.
+ *
+ * Browsers that block third-party cookies (and the preview iframe is exactly
+ * that) will never send the cookie, so the header path is the one that keeps
+ * students signed in. The token is the same signed value either way.
+ */
+export function tokenFromRequest(secret, req) {
+  const header = req.headers.authorization;
+  if (typeof header === 'string') {
+    const match = header.match(/^Bearer\s+(.+)$/i);
+    if (match) {
+      const id = verifySession(secret, match[1].trim());
+      if (id) return id;
+    }
+  }
+  return verifySession(secret, readCookie(req.headers.cookie));
 }
 
 export function clearCookie() {
@@ -62,7 +90,7 @@ export function readCookie(cookieHeader, name = COOKIE) {
 }
 
 export function studentIdFromRequest(secret, req) {
-  return verifySession(secret, readCookie(req.headers.cookie));
+  return tokenFromRequest(secret, req);
 }
 
 /** Constant-time admin key check. */

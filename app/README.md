@@ -140,6 +140,20 @@ By default a student's email is their identity — no password. That is fine for
 closed campus session with a room cap of 100, and it keeps sign-up fast on a
 phone. Say the word if you want passwords instead.
 
+### Sessions do not rely on cookies
+
+Sign-in returns a signed token as well as a cookie. The browser keeps the token
+in memory and sends it as `Authorization: Bearer …`; the cookie is only a
+convenience so a reload does not sign anyone out.
+
+This is not over-engineering: when the site is shown inside a frame on another
+site — which is exactly what a preview pane is — browsers treat the session
+cookie as third-party and silently drop it. The symptom is a login that
+"succeeds" and then never advances. The token path avoids that entirely, and
+also covers students who have cookies disabled. The cookie is sent with
+`SameSite=None; Secure` when the request arrives over HTTPS so it is at least
+usable in the frame, and plain `Lax` on a local HTTP server.
+
 ## Capacity
 
 Measured locally, not estimated: **70 students registering, submitting both
