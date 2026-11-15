@@ -42,22 +42,33 @@ The portal is the source of truth for scoring. Everything here is a convenience 
 
 Dates are suggestions — but the events do have to be booked at least **24 hours** ahead, and they must run **exactly** at the submitted time. Unannounced changes score zero.
 
-| Date | Day | Move |
-|------|-----|------|
-| **15 Nov** | Sun | Set up. Fill your GID / campus / region into the dashboard. Read the **Void rules** tab once, properly. Book the Game On Night slot. |
-| **16 Nov** | Mon | Promote Game On Night — WhatsApp groups, class group, IG story, notice board. Build your sample game doc + poster so you have something to demo. |
-| **17 Nov** | Tue | Film and post the **Squad Up reel**. One task locked before the events even start. |
-| **18 Nov** | Wed | **Game On Night**, 7:00 pm, 60 minutes. Record from before anyone joins. |
-| **19 Nov** | Thu | Submit Game On Night proof. Fill the **Nominate Best Entry** form. Post a recap story. |
-| **20–24 Nov** | Fri–Tue | **Study Notebooks interviews.** 3 per day clears 13 by the 24th. 15–20 min each, both forms every time. |
-| **25 Nov** | Wed | Log every interview in the portal with both receipts. Post **Monthly Highlights**. |
+Morning slots, as you asked. All of this is **already on your Google Calendar** — 6 events, 11 sessions.
+
+| Date | Time | Move |
+|------|------|------|
+| **15 Nov** | Sun | Set up. Fill your GID / campus / region into the dashboard. Read the **Void rules** tab once, properly. |
+| **16 Nov** | Mon 10:00 | **Book the Game On Night slot** and start promo. Form must be in by **Tue 17 Nov, 10:00** for a Wed morning event. |
+| **17 Nov** | Tue 19:00 | **Film and post the Squad Up reel.** One task locked before the events even start. |
+| **18 Nov** | Wed 10:00 | **GAME ON NIGHT** — 60 minutes, morning. Record before anyone joins. |
+| **18 Nov** | Wed 11:45 | Collect all three links per participant + fill **Nominate Best Entry** while it's fresh. |
+| **20–24 Nov** | 11:00–13:00 | **Study Notebooks interviews**, 3 a day, 13 total. 15–20 min each, both forms every time. |
+| **25 Nov** | Wed 18:00 | Log every interview with both receipts. Post **Monthly Highlights**. |
 | **26 Nov** | Thu | Buffer — chase anyone who only filled one form. |
-| **27–29 Nov** | Fri–Sun | Buffer. Top up interviews if the verified count is under 10. Confirm the portal shows all three tasks as submitted. |
-| **30 Nov** | Mon | **Deadline.** Screenshot your submissions and receipts. |
+| **27–29 Nov** | Fri–Sun | Buffer. Top up interviews if verified count is under 10. |
+| **30 Nov** | Mon 09:00 | **Deadline.** Final submission + screenshot everything. |
 
-**Why this order:** the reel takes one evening and locks a whole task early. The events carry the points, so they go first in the calendar, and the last five days stay empty on purpose — verification problems are normal and you want room to fix them.
+**Why this order:** the reel takes one evening and locks a whole task before the events even start. The events carry the points so they go first, and the last five days stay empty on purpose — verification problems are normal and you want room to fix them.
 
-**If you'd rather do Game On Night on a weekend** (often better student attendance), use **Sat 21 Nov** instead and slide the Study Notebooks block to 22–26 Nov. Still leaves buffer.
+### On morning slots
+
+Nothing in the rules restricts the time of day — a morning Game On Night is fine. Two things are enforced though:
+
+1. **The booking form goes in at least 24 hours before** the slot. That's why the booking task sits on Mon 16 for a Wed 18 event.
+2. **The event runs at exactly the submitted time.** Shifting it later, even by an hour, scores zero.
+
+A weekday morning is genuinely the stronger choice: students are already on campus, so show-up is far better than asking them to return for an evening call. Make it concrete — a room, a projector, a sanctioned slot with faculty if you can get one — and it stops competing with lectures.
+
+**If 10:00 clashes with a lab or a lecture**, move it to **9:00** or to **Sat 21 Nov, 11:00** instead and push the Study Notebooks block to 22–26 Nov. Both still leave buffer. Say the word and I'll re-time everything.
 
 ---
 
