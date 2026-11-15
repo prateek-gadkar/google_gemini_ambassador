@@ -26,7 +26,14 @@ class VersionConflict extends Error {}
 
 export class RestStore {
   constructor(options = {}) {
-    this.base = String(options.url || '').replace(/\/+$/, '');
+    // Supabase's dashboard shows the REST endpoint with the path already on it
+    // (`.../rest/v1/`). Accept either form so a copy-paste cannot produce
+    // `/rest/v1/rest/v1/state`.
+    this.base = String(options.url || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/rest\/v1$/i, '')
+      .replace(/\/+$/, '');
     this.key = options.key || '';
     this.table = options.table || 'state';
     this.docId = options.docId ?? 1;

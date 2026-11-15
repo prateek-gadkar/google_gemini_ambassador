@@ -265,3 +265,20 @@ test('the whole app works end to end on the serverless store', async () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+test('a project URL pasted straight from Supabase works, with or without /rest/v1', async () => {
+  await withMock(async ({ url }) => {
+    // The dashboard shows ".../rest/v1/"; the client appends that path itself.
+    for (const form of [url + '/rest/v1/', url + '/rest/v1', url + '/', url]) {
+      const store = await new RestStore({ url: form, key: 'k' }).init();
+      assert.ok(store.version !== null, `failed for ${form}`);
+      assert.equal(store.url(), `${url}/rest/v1/state`, `wrong endpoint for ${form}`);
+      assert.equal(
+        store.url('?id=eq.1'),
+        `${url}/rest/v1/state?id=eq.1`,
+        `wrong query shape for ${form}`
+      );
+    }
+  });
+});
