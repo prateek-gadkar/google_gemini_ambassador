@@ -6,8 +6,10 @@ function $(id) { return document.getElementById(id); }
 
 function showBanner(text, kind) {
   var node = $('certMsg');
+  var name = kind === 'ok' ? 'check_circle' : kind === 'bad' ? 'warning' : 'info';
   node.className = 'banner ' + (kind || 'warn');
-  node.textContent = text;
+  node.innerHTML =
+    '<span class="banner-ico">' + gsaIcon(name, 20) + '</span><span>' + text + '</span>';
   node.classList.remove('hidden');
 }
 

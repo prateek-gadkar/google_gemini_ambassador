@@ -3,30 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Certificate Station</title>
+<title>Certificate Station · Gemini Student Ambassadors</title>
+<meta name="description" content="Complete the required Google Gemini Student Ambassador tasks, then download your certificate.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/brand/google-g-128.png">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="wrap">
 
-  <header class="top">
-    <div class="brand">
-      <div class="dot"></div>
-      <div>
-        <strong id="siteName">Certificate Station</strong>
-        <span id="siteTagline">Complete every required task, then collect your certificate.</span>
-      </div>
-    </div>
-    <button class="ghost small hidden" id="btnSignOut">Sign out</button>
-  </header>
+<div class="accent-strip" aria-hidden="true"></div>
+
+<header class="appbar">
+  <a class="brand" href="/" aria-label="Google Student Ambassador Program — certificate station">
+    <img class="brand-google" src="/brand/google-g-64.png" alt="Google" width="26" height="26">
+    <span class="brand-rule" aria-hidden="true"></span>
+    <img class="brand-sparkle" src="/brand/gemini-sparkle.png" alt="Gemini" width="24" height="24">
+    <span class="brand-text">
+      <strong id="siteName">Certificate Station</strong>
+      <span id="siteTagline">Complete every required task, then collect your certificate.</span>
+    </span>
+  </a>
+  <div class="appbar-actions">
+    <button class="ghost small hidden" id="btnSignOut" type="button" data-icon="logout" data-icon-size="16">Sign out</button>
+  </div>
+</header>
+
+<div class="wrap">
 
   <!-- ---------- signed out ---------- -->
   <section id="signedOut" class="hidden">
-    <h1>Register for your certificate</h1>
-    <p class="lede">
-      Sign up with the same name and email you use for the session. You will be able to
-      download your certificate once every required task is done.
-    </p>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Google Student Ambassador Program</p>
+        <h1>Register for your certificate</h1>
+        <p class="lede">
+          Sign up with the same name and email you use for the session. You will be able to
+          download your certificate once every required task has been checked by the organiser.
+        </p>
+      </div>
+      <img class="hero-mark" src="/brand/gemini-sparkle.png" alt="" aria-hidden="true">
+    </div>
 
     <form class="card" id="formRegister" autocomplete="on">
       <label class="field">
@@ -64,8 +81,16 @@
 
   <!-- ---------- signed in ---------- -->
   <section id="signedIn" class="hidden">
-    <h1 id="greeting">Hey there</h1>
-    <p class="lede" id="subGreeting"></p>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Google Student Ambassador Program</p>
+        <h1 id="greeting">Hey there</h1>
+        <p class="lede" id="subGreeting"></p>
+      </div>
+      <img class="hero-mark" src="/brand/gemini-sparkle.png" alt="" aria-hidden="true">
+    </div>
+
+    <div id="kpis" class="kpis"></div>
 
     <div id="gateBanner" class="banner"></div>
 
@@ -73,17 +98,30 @@
     <div id="taskList"></div>
 
     <div class="card" id="certCard">
-      <h2>Your certificate</h2>
+      <div class="card-head">
+        <h2>Your certificate</h2>
+        <span class="pill info" id="certPill">locked</span>
+      </div>
       <div id="certBody"></div>
     </div>
 
     <footer class="foot">
-      Signed in as <span id="footEmail" class="mono"></span>.
-      Your name on the certificate is <b id="footName"></b> &mdash; ask the organiser if it needs correcting.
+      <span class="foot-marks">
+        <img class="foot-mark foot-google" src="/brand/google-wordmark.png" alt="Google" width="73" height="24">
+        <img class="foot-mark foot-gemini" src="/brand/gemini-wordmark.png" alt="Gemini" width="66" height="24">
+        <img class="foot-mark hidden" id="footGsa" src="/brand/gsa-logo.png" alt="Google Student Ambassador Program" height="24">
+      </span>
+      <span class="foot-text">
+        Signed in as <span id="footEmail" class="mono"></span>.
+        Your name on the certificate is <b id="footName"></b> &mdash; ask the organiser if it needs correcting.
+        Certificate Station is the organiser's tool for the Google Student Ambassador Program.
+      </span>
     </footer>
   </section>
 
 </div>
+
+<script src="/icons.js"></script>
 <script src="/student.js"></script>
 </body>
 </html>

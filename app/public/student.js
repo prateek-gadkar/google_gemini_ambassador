@@ -88,11 +88,67 @@ function statusText(status) {
   return STATUS_LABEL[status] || status;
 }
 
+var STATUS_ICON = {
+  verified: 'check_circle',
+  submitted: 'schedule',
+  rejected: 'cancel',
+  empty: 'description',
+};
+
+function icon(name, size) {
+  return typeof gsaIcon === 'function' ? gsaIcon(name, size || 18) : '';
+}
+
 function statusPill(status) {
   var cls = 'pill';
   if (status === 'verified' || status === 'submitted') cls += status === 'verified' ? ' done' : ' pending';
   if (status === 'rejected') cls += ' rejected';
-  return el('span', { class: cls, text: statusText(status) });
+  return el('span', {
+    class: cls,
+    html: icon(STATUS_ICON[status] || 'info', 14) + '<span>' + statusText(status) + '</span>',
+  });
+}
+
+/**
+ * A notice is a sentence with a mark beside it, so the colour is never the only
+ * thing telling you whether it is good news.
+ */
+function setBanner(node, text, kind, iconName) {
+  if (!node) return;
+  node.className = 'banner' + (kind ? ' ' + kind : '');
+  node.innerHTML =
+    '<span class="banner-ico">' + icon(iconName || (kind === 'ok' ? 'check_circle' : kind === 'bad' ? 'warning' : 'info'), 20) + '</span>' +
+    '<span>' + (text || '') + '</span>';
+}
+
+/**
+ * The three numbers that answer "how far am I?" without reading the cards.
+ */
+function renderKpis(student) {
+  var host = $('kpis');
+  if (!host) return;
+  host.innerHTML = '';
+
+  var required = student.tasks.filter(function (t) { return t.required; });
+  var approved = required.filter(function (t) { return t.status === 'verified'; }).length;
+  var waiting = (student.waitingFor || []).length;
+  var left = (student.untouched || []).length;
+
+  function tile(kind, name, value, label) {
+    host.appendChild(
+      el('div', { class: 'kpi ' + kind }, [
+        el('span', { class: 'kpi-ico', html: icon(name, 18) }),
+        el('span', null, [
+          el('span', { class: 'kpi-value', text: value }),
+          el('span', { class: 'kpi-label', text: label }),
+        ]),
+      ])
+    );
+  }
+
+  tile('good', 'check_circle', approved + ' of ' + required.length, approved === 1 ? 'task approved' : 'tasks approved');
+  tile(waiting ? 'wait' : 'info', 'schedule', String(waiting), waiting === 1 ? 'waiting for approval' : 'waiting for approval');
+  tile(left ? 'bad' : 'good', left ? 'lock' : 'verified', String(left), left === 1 ? 'task still to do' : 'tasks still to do');
 }
 
 function render() {
@@ -126,31 +182,40 @@ function render() {
   $('footEmail').textContent = student.email;
   $('footName').textContent = student.name;
 
-  var banner = $('gateBanner');
   if (student.unlocked) {
-    banner.className = 'banner ok';
-    banner.textContent = 'Unlocked. Every required task is approved.';
+    setBanner($('gateBanner'), 'Unlocked. Every required task is approved.', 'ok', 'verified');
   } else if (untouched.length) {
-    banner.className = 'banner warn';
     var line = 'Locked. Still required: ' + untouched.join(', ') + '.';
     if (waiting.length) line += ' Waiting for approval: ' + waiting.join(', ') + '.';
-    banner.textContent = line;
+    setBanner($('gateBanner'), line, 'warn', 'lock');
   } else {
-    banner.className = 'banner warn';
-    banner.textContent =
+    setBanner(
+      $('gateBanner'),
       'Everything is submitted. The organiser approves each entry by hand — ' +
-      'your certificate unlocks as soon as ' +
-      (waiting.length > 1 ? 'they are' : 'it is') + ' approved. Keep this page open or check back.';
+        'your certificate unlocks as soon as ' +
+        (waiting.length > 1 ? 'they are' : 'it is') + ' approved. Keep this page open or check back.',
+      'warn',
+      'schedule'
+    );
   }
+
+  renderKpis(student);
 
   var list = $('taskList');
   list.innerHTML = '';
   student.tasks.forEach(function (task) {
-    var card = el('div', {
-      class: 'task ' + (task.status === 'verified' ? 'done' : task.status === 'rejected' ? 'rejected' : ''),
-    });
+    var state =
+      task.status === 'verified'
+        ? ' done'
+        : task.status === 'rejected'
+        ? ' rejected'
+        : task.status === 'submitted'
+        ? ' waiting'
+        : '';
+    var card = el('div', { class: 'task' + state });
 
     var head = el('div', { class: 'head' }, [
+      el('span', { class: 'task-ico', html: icon(STATUS_ICON[task.status] || 'description', 20) }),
       el('span', { class: 'name', text: task.label }),
       statusPill(task.status),
     ]);
@@ -167,7 +232,7 @@ function render() {
             target: '_blank',
             rel: 'noopener noreferrer',
             class: 'form-link',
-            text: (task.formLabel || 'Open the form') + ' \u2197',
+            html: icon('open_in_new', 16) + '<span>' + (task.formLabel || 'Open the form') + '</span>',
           }),
         ])
       );
@@ -198,7 +263,7 @@ function render() {
     var submit = el('button', {
       class: 'primary small',
       type: 'button',
-      text: task.receipt ? 'Update' : 'Submit',
+      html: icon('upload', 16) + '<span>' + (task.receipt ? 'Update' : 'Submit') + '</span>',
       onclick: function () {
         var value = input.value.trim();
         if (value.length < 3) {
@@ -232,7 +297,7 @@ function render() {
     var upload = el('button', {
       class: 'ghost small',
       type: 'button',
-      text: task.hasProof ? 'Replace screenshot' : 'Add screenshot (optional)',
+      html: icon('image', 16) + '<span>' + (task.hasProof ? 'Replace screenshot' : 'Add screenshot (optional)') + '</span>',
       onclick: function () { file.click(); },
     });
     file.addEventListener('change', function () {
@@ -275,11 +340,20 @@ function render() {
   renderCertCard(student);
 }
 
+function setCertPill(cls, text) {
+  var pill = $('certPill');
+  if (!pill) return;
+  pill.className = 'pill ' + cls;
+  pill.innerHTML = icon(cls === 'done' ? 'verified' : cls === 'pending' ? 'schedule' : 'lock', 14) +
+    '<span>' + text + '</span>';
+}
+
 function renderCertCard(student) {
   var body = $('certBody');
   body.innerHTML = '';
 
   if (!student.unlocked) {
+    setCertPill('', 'locked');
     body.appendChild(
       el('p', {
         class: 'muted',
@@ -290,19 +364,23 @@ function renderCertCard(student) {
   }
 
   if (!state.me.cert.ready) {
+    setCertPill('pending', 'artwork pending');
     var gaps = [];
     if (!state.me.cert.templateReady) gaps.push('the certificate artwork');
     if (!state.me.cert.signatureReady) gaps.push('the signature');
     body.appendChild(
       el('div', {
         class: 'banner warn',
-        text:
+        html:
+          '<span class="banner-ico">' + icon('warning', 20) + '</span><span>' +
           'You are unlocked, but ' + gaps.join(' and ') +
-          ' still needs to be added by the organiser before certificates can be issued.',
+          ' still needs to be added by the organiser before certificates can be issued.</span>',
       })
     );
     return;
   }
+
+  setCertPill(student.cert ? 'done' : 'info', student.cert ? 'issued' : 'ready');
 
   if (student.cert) {
     body.appendChild(
@@ -331,7 +409,7 @@ function renderCertCard(student) {
   var go = el('button', {
     class: 'primary',
     type: 'button',
-    text: 'Download certificate',
+    html: icon('download', 18) + '<span>Download certificate</span>',
     onclick: function () {
       var typed = input.value.trim();
       if (!typed) { setMsg(msg, 'Type your name first.', 'err'); return; }
@@ -436,6 +514,19 @@ $('btnSignOut').addEventListener('click', function () {
       return refresh();
     });
 });
+
+// The programme lockup is optional: if the organiser drops the official file in
+// (app/public/brand/gsa-logo.png) it appears in the footer, and if it is not
+// there the footer simply shows the Google and Gemini marks. A 404 removes the
+// slot instead of leaving a broken image.
+(function () {
+  var slot = $('footGsa');
+  if (!slot) return;
+  slot.addEventListener('load', function () { slot.classList.remove('hidden'); });
+  slot.addEventListener('error', function () {
+    if (slot.parentNode) slot.parentNode.removeChild(slot);
+  });
+})();
 
 loadToken();
 refresh().catch(function (err) {

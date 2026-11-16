@@ -50,26 +50,41 @@ function setKey(value) {
   $('btnLock').classList.toggle('hidden', !value);
 }
 
+function setAdminBanner(node, kind, iconName, text) {
+  if (!node) return;
+  node.className = 'banner ' + kind;
+  node.innerHTML =
+    '<span class="banner-ico">' + icon(iconName, 20) + '</span><span>' + text + '</span>';
+}
+
 function renderTemplate(cert) {
   var banner = $('tplBanner');
   var templateName = cert.templateUrl ? cert.templateUrl.split('/').pop() : null;
   var sigName = cert.signatureUrl ? cert.signatureUrl.split('/').pop() : null;
 
   if (!templateName) {
-    banner.className = 'banner warn';
-    banner.textContent =
-      'No certificate artwork uploaded yet. Upload the official image to continue.';
+    setAdminBanner(
+      banner,
+      'warn',
+      'image',
+      'No certificate artwork uploaded yet. Upload the official image to continue.'
+    );
   } else if (!sigName) {
-    banner.className = 'banner warn';
-    banner.textContent =
-      'Artwork uploaded, but your signature image is missing. Downloads stay locked until it is added — an unsigned certificate is not a certificate.';
+    setAdminBanner(
+      banner,
+      'warn',
+      'warning',
+      'Artwork uploaded, but your signature image is missing. Downloads stay locked until it is added — an unsigned certificate is not a certificate.'
+    );
   } else if (!cert.templateReady) {
-    banner.className = 'banner warn';
-    banner.textContent =
-      'Artwork and signature are in place but downloads are disabled. Open calibration to position the name and date, then enable.';
+    setAdminBanner(
+      banner,
+      'warn',
+      'tune',
+      'Artwork and signature are in place but downloads are disabled. Open calibration to position the name and date, then enable.'
+    );
   } else {
-    banner.className = 'banner ok';
-    banner.textContent = 'Live. Unlocked students can download their certificate.';
+    setAdminBanner(banner, 'ok', 'check_circle', 'Live. Unlocked students can download their certificate.');
   }
 
   $('tplState').textContent = templateName
@@ -86,7 +101,17 @@ function taskCell(student, task) {
   else if (task.status === 'submitted') cls += ' pending';
   else if (task.status === 'rejected') cls += ' rejected';
 
-  var bits = [el('span', { class: cls, text: task.status })];
+  var pillIcon =
+    task.status === 'verified'
+      ? 'check_circle'
+      : task.status === 'submitted'
+      ? 'schedule'
+      : task.status === 'rejected'
+      ? 'cancel'
+      : 'description';
+  var bits = [
+    el('span', { class: cls, html: icon(pillIcon, 14) + '<span>' + task.status + '</span>' }),
+  ];
   if (task.receipt) {
     bits.push(el('div', { class: 'tiny', style: 'margin-top:4px;max-width:220px;word-break:break-word', text: task.receipt }));
   }
@@ -98,18 +123,22 @@ function taskCell(student, task) {
         style: 'display:inline-block;margin-top:4px',
         target: '_blank',
         rel: 'noopener',
-        text: 'screenshot',
+        html: icon('image', 14) + '<span>screenshot</span>',
       })
     );
   }
 
   var actions = el('div', { class: 'row', style: 'margin-top:6px;gap:6px' }, [
     el('button', {
-      class: 'ghost small', type: 'button', text: 'Verify',
+      class: 'ghost small',
+      type: 'button',
+      html: icon('check_circle', 16) + '<span>Verify</span>',
       onclick: function () { setTask(student.id, task.key, 'verified'); },
     }),
     el('button', {
-      class: 'ghost small', type: 'button', text: 'Reject',
+      class: 'ghost small danger',
+      type: 'button',
+      html: icon('cancel', 16) + '<span>Reject</span>',
       onclick: function () { setTask(student.id, task.key, 'rejected'); },
     }),
   ]);
@@ -126,6 +155,23 @@ function setTask(studentId, taskKey, status) {
     .catch(function (err) { alert(err.message); });
 }
 
+function icon(name, size) {
+  return typeof gsaIcon === 'function' ? gsaIcon(name, size || 18) : '';
+}
+
+/** One number, its label, and a mark that says what the colour means. */
+function tile(host, kind, name, value, label) {
+  host.appendChild(
+    el('div', { class: 'kpi ' + kind }, [
+      el('span', { class: 'kpi-ico', html: icon(name, 18) }),
+      el('span', null, [
+        el('span', { class: 'kpi-value', text: value }),
+        el('span', { class: 'kpi-label', text: label }),
+      ]),
+    ])
+  );
+}
+
 function render(data) {
   renderTemplate(data.cert);
 
@@ -140,14 +186,11 @@ function render(data) {
 
   var stats = $('stats');
   stats.innerHTML = '';
-  stats.appendChild(el('span', { class: 'pill', text: data.stats.total + ' registered' }));
-  stats.appendChild(el('span', { class: 'pill done', text: data.stats.unlocked + ' unlocked' }));
-  stats.appendChild(el('span', { class: 'pill done', text: data.stats.issued + ' issued' }));
-  if (pending) {
-    stats.appendChild(
-      el('span', { class: 'pill pending', text: pending + ' awaiting your approval' })
-    );
-  }
+  tile(stats, pending ? 'wait' : 'good', pending ? 'schedule' : 'check_circle', String(pending),
+    pending === 1 ? 'entry awaiting your approval' : 'entries awaiting your approval');
+  tile(stats, 'info', 'person', String(data.stats.total), 'registered');
+  tile(stats, 'good', 'verified', String(data.stats.unlocked), 'unlocked');
+  tile(stats, 'good', 'download', String(data.stats.issued), 'certificates issued');
 
   var head = $('table').querySelector('thead');
   var body = $('table').querySelector('tbody');
