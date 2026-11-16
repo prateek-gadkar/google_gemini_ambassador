@@ -15,7 +15,8 @@ unlock-code path would have removed.
 running in Mumbai, data in Supabase.
 
 Verified on 15 November by a scripted walk of the live site, run from the Vercel
-build machine and printed into the deployment log:
+build machine and printed into the deployment log. Every deploy runs it, so the
+log itself is the proof:
 
 ```
 PASS  the site answers — HTTP 200
@@ -27,16 +28,29 @@ PASS  a new student is locked
 PASS  the first receipt is accepted — HTTP 200
 PASS  one task of two is still locked
 PASS  the second receipt is accepted — HTTP 200
-PASS  two tasks unlock the certificate
+PASS  both receipts are waiting for approval — Pre-survey form, Post-survey form
+PASS  nothing is left unfilled
+PASS  the organiser approves both entries — 2 of 2
+PASS  approval unlocks the certificate
 PASS  a different name is refused — HTTP 403
-SKIP  a certificate is issued — no signature uploaded yet, so the site refuses by design
+PASS  a certificate is issued — HTTP 200, serial CERT-92AA912B
+PASS  the same student gets the same serial twice — no duplicate serials
 PASS  the test registration is removed — HTTP 200
+
+smoke test: 17 checks passed
+database preflight: OK
 ```
 
-That last SKIP is the only thing standing between the site and a finished
-feature: upload the signature at `/admin`, then open `/calibrate` and press
-**Save and enable**. An unsigned certificate is not a certificate, so the site
-refuses by design until you do.
+That covers the whole chain end to end: registered → locked → two receipts
+submitted → **still locked while they wait for the organiser** → approved in
+`/admin` → unlocked → wrong name refused → real certificate rendered with a
+unique serial → the same student gets the same serial again → the throwaway test
+registration deleted, so the roster is left exactly as it was found.
+
+Nothing is left for you to switch on. Upload the artwork and paste the
+signature at `/admin` (both already in place on the live site), press
+**Save and enable** in `/calibrate` when you want to move the name or the date,
+and the run above is what students will see.
 
 | Path | Cost | Always on? | Status |
 | --- | --- | --- | --- |
@@ -56,7 +70,7 @@ wiped between requests and two requests can land on two different instances.
 So the registration list can no longer live in a file. It now lives in one row
 of a free hosted Postgres — Supabase's free tier, email sign-in only, no card —
 and the site reaches it over HTTP. Everything else is unchanged: the same gate,
-the same certificate renderer, the same admin console, the same 42 checks.
+the same certificate renderer, the same admin console, the same 48 tests.
 
 **What I already changed** (committed, and the full suite passes):
 
@@ -114,10 +128,10 @@ I set four environment variables on the Vercel project and deploy:
 | `DATA_DIR` | `/tmp/gsa-data` | scratch space for the artwork; nothing durable lives here |
 
 Then I run the real thing end to end on the live URL: register a test student,
-submit both receipts, confirm it is still locked after one, unlock after two,
-confirm a wrong name gives `403`, download the certificate with the right name,
-and confirm the registration shows up in `/admin`. Then I delete the test
-student.
+submit both receipts, confirm it stays locked while they wait for approval,
+approve both from the admin API, confirm the wrong name gives `403`, download
+the certificate with the right name, and confirm the registration shows up in
+`/admin`. Then I delete the test student.
 
 ### Step 3 — what else was checked
 
@@ -125,11 +139,11 @@ The database itself, from the build log of the same deployment:
 
 ```
 PASS  key is a secret key — new-style sb_secret_ key
-PASS  reached the table — row present, version 5
-PASS  document readable — 0 registration(s) stored
+PASS  reached the table — row present, version 44
+PASS  document readable — 1 registration(s) stored
 PASS  signing secret present
-PASS  write with a version guard — version 5 → 6
-PASS  a second instance sees the same row — version 6
+PASS  write with a version guard — version 44 → 45
+PASS  a second instance sees the same row — version 45
 PASS  unauthenticated read refused — HTTP 401
 database preflight: OK
 ```
