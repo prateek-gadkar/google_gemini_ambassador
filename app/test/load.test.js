@@ -33,7 +33,7 @@ function client(base) {
   };
 }
 
-test('seventy students register, finish tasks and download certificates concurrently', async (t) => {
+test('seventy students register, submit, get approved and download certificates concurrently', async (t) => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-load-data-'));
   const assetsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gsa-load-assets-'));
   const { server, store } = await createServer({ dataDir, assetsDir, adminKey: ADMIN_KEY });
@@ -103,6 +103,24 @@ test('seventy students register, finish tasks and download certificates concurre
     assert.equal(res.status, 200, `receipt ${i} failed: ${JSON.stringify(res.body)}`);
   });
 
+  // 2b. The organiser approves all 140 entries in one burst. Approval is a
+  // person pressing a button, but 100 students must not make that slow.
+  const admin = client(base);
+  const approvals = await Promise.all(
+    registrations.flatMap((reg) =>
+      ['pre', 'post'].map((key) =>
+        admin.request(`/api/admin/students/${reg.body.student.id}/task`, {
+          method: 'POST',
+          headers: { 'x-admin-key': ADMIN_KEY },
+          json: { key, status: 'verified' },
+        })
+      )
+    )
+  );
+  approvals.forEach((res, i) => {
+    assert.equal(res.status, 200, `approval ${i} failed: ${JSON.stringify(res.body)}`);
+  });
+
   // 3. Everyone downloads at once.
   const downloads = await Promise.all(
     students.map((s) =>
@@ -131,11 +149,10 @@ test('seventy students register, finish tasks and download certificates concurre
 
   const elapsed = Date.now() - started;
   t.diagnostic(
-    `${TOTAL} students, ${TOTAL * 4} requests, ${elapsed}ms total ` +
-      `(${Math.round((TOTAL * 4) / (elapsed / 1000))} req/s)`
+    `${TOTAL} students, ${TOTAL * 6} requests, ${elapsed}ms total ` +
+      `(${Math.round((TOTAL * 6) / (elapsed / 1000))} req/s)`
   );
 
-  const admin = client(base);
   const list = await admin.request('/api/admin/students', {
     headers: { 'x-admin-key': ADMIN_KEY },
   });

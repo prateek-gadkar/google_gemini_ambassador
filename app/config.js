@@ -37,23 +37,24 @@ export const CONFIG = {
       key: 'pre',
       label: 'Pre-survey form',
       required: true,
-      hint: 'Fill the pre-survey linked in the portal, then paste your confirmation below.',
-      formUrl: '', // paste the exact pre-survey link you gave students
+      hint: 'Open the form, fill it in, then paste the confirmation you get at the end below.',
+      formUrl: 'https://producttrialsurvey.geministudentambassador.com/',
       proofRequired: false,
     },
     {
       key: 'post',
       label: 'Post-survey form',
       required: true,
-      hint: 'Fill the post-survey linked in the portal, then paste your confirmation below.',
-      formUrl: '', // paste the exact post-survey link you gave students
+      hint: 'Open the form, fill it in, then paste the confirmation you get at the end below.',
+      formUrl: 'https://producttrialfeedback.geministudentambassador.com/',
       proofRequired: false,
     },
   ],
 
-  // Receipts count as verified the moment they are submitted. An admin can
-  // still mark a receipt rejected afterwards, which re-locks the certificate.
-  autoVerifyReceipts: true,
+  // false = a submitted receipt is only a claim. The organiser opens /admin and
+  // presses Verify for that student; until then the certificate stays locked.
+  // Set this to true to let submissions unlock by themselves again.
+  autoVerifyReceipts: false,
 
   // Official participant ceiling for the Game On Night session.
   maxStudents: 100,

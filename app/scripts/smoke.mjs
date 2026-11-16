@@ -123,8 +123,44 @@ export async function runSmoke({ base, adminKey = '', log = console.log, strict 
     record(post.status === 200, 'the second receipt is accepted', `HTTP ${post.status}`);
 
     me = await client.request('/api/me');
-    const unlocked = me.body?.student?.unlocked === true;
-    record(unlocked, 'two tasks unlock the certificate', '');
+
+    // Whether two receipts are enough depends on how the site is configured:
+    // automatic approval, or the organiser pressing Verify for each entry. Both
+    // are legitimate; what must never happen is an unapproved entry unlocking.
+    let unlocked = me.body?.student?.unlocked === true;
+    if (unlocked) {
+      record(true, 'two receipts unlock the certificate');
+      skip(
+        'the organiser approves each entry',
+        'this site approves receipts automatically'
+      );
+    } else {
+      const waiting = me.body?.student?.waitingFor || [];
+      record(waiting.length === 2, 'both receipts are waiting for approval', waiting.join(', '));
+      record(
+        (me.body?.student?.untouched || []).length === 0,
+        'nothing is left unfilled'
+      );
+
+      if (!adminKey) {
+        skip('the organiser approves each entry', 'no admin key supplied');
+      } else {
+        const admin = makeClient(target);
+        let approved = 0;
+        for (const key of ['pre', 'post']) {
+          const res = await admin.request(`/api/admin/students/${studentId}/task`, {
+            method: 'POST',
+            headers: { 'x-admin-key': adminKey },
+            json: { key, status: 'verified' },
+          });
+          if (res.status === 200) approved += 1;
+        }
+        record(approved === 2, 'the organiser approves both entries', `${approved} of 2`);
+        me = await client.request('/api/me');
+        unlocked = me.body?.student?.unlocked === true;
+        record(unlocked, 'approval unlocks the certificate');
+      }
+    }
 
     if (!unlocked) return summarise();
 
