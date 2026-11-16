@@ -31,11 +31,18 @@ function adminFetch(path, options) {
   });
 }
 
+function bannerIcon(kind) {
+  if (kind === 'ok') return 'check_circle';
+  if (kind === 'bad') return 'warning';
+  return 'info';
+}
+
 function banner(text, kind) {
   var node = $('msg');
   if (!text) { node.classList.add('hidden'); return; }
   node.className = 'banner ' + (kind || 'warn');
-  node.textContent = text;
+  node.innerHTML =
+    '<span class="banner-ico">' + gsaIcon(bannerIcon(kind), 20) + '</span><span>' + text + '</span>';
   node.classList.remove('hidden');
 }
 

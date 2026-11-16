@@ -4,25 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Admin · Certificate Station</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+<div class="accent-strip" aria-hidden="true"></div>
+
+<header class="appbar">
+  <a class="brand" href="/admin" aria-label="Admin console">
+    <img class="brand-google" src="/brand/google-g-64.png" alt="Google" width="26" height="26">
+    <span class="brand-rule" aria-hidden="true"></span>
+    <img class="brand-sparkle" src="/brand/gemini-sparkle.png" alt="Gemini" width="24" height="24">
+    <span class="brand-text">
+      <strong>Admin console</strong>
+      <span>Registrations, task checks, certificate setup</span>
+    </span>
+  </a>
+  <div class="appbar-actions">
+    <a class="plain-link" href="/calibrate">Calibrate</a>
+    <button class="ghost small hidden" id="btnLock" type="button">Lock</button>
+  </div>
+</header>
+
 <div class="wrap">
 
-  <header class="top">
-    <div class="brand">
-      <div class="dot"></div>
-      <div>
-        <strong>Admin console</strong>
-        <span>Registrations, task checks, certificate setup</span>
-      </div>
-    </div>
-    <button class="ghost small hidden" id="btnLock">Lock</button>
-  </header>
-
   <section id="keyPanel">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Google Student Ambassador Program</p>
+        <h1>Admin console</h1>
+        <p class="lede">
+          Every submission waits for you: approve a receipt and the student's certificate unlocks
+          the moment the last required task is approved.
+        </p>
+      </div>
+      <img class="hero-mark" src="/brand/gemini-sparkle.png" alt="" aria-hidden="true">
+    </div>
+
     <div class="card">
-      <h2>Admin key</h2>
+      <h2><span class="ico-lead" data-icon="key" data-icon-size="20"></span>Admin key</h2>
       <p class="muted">
         Printed in the server log when it starts, or set via the <code>ADMIN_KEY</code>
         environment variable. It stays in this browser tab only.
@@ -42,29 +64,31 @@
     <div class="banner" id="tplBanner"></div>
 
     <div class="card">
-      <h2>Certificate setup</h2>
+      <div class="card-head">
+        <h2><span class="ico-lead" data-icon="image" data-icon-size="20"></span>Certificate setup</h2>
+      </div>
       <p class="muted" id="tplState">Checking...</p>
       <div class="row">
         <input type="file" id="tplFile" accept="image/png,image/jpeg" class="hidden">
-        <button class="ghost" type="button" id="btnUploadTpl">Upload certificate image</button>
+        <button class="ghost" type="button" id="btnUploadTpl" data-icon="upload" data-icon-size="16">Upload certificate image</button>
         <input type="file" id="sigFile" accept="image/png,image/jpeg" class="hidden">
-        <button class="ghost" type="button" id="btnUploadSig">Upload signature</button>
-        <button class="ghost" type="button" id="btnCalibrate">Open calibration</button>
+        <button class="ghost" type="button" id="btnUploadSig" data-icon="upload" data-icon-size="16">Upload signature</button>
+        <button class="ghost" type="button" id="btnCalibrate" data-icon="tune" data-icon-size="16">Open calibration</button>
       </div>
       <div class="msg" id="tplMsg"></div>
       <p class="tiny" id="sigState" style="margin-top:10px"></p>
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between;margin-bottom:12px">
-        <h2 style="margin:0">Students</h2>
+      <div class="card-head">
+        <h2><span class="ico-lead" data-icon="person" data-icon-size="20"></span>Students</h2>
         <div class="row">
-          <button class="ghost small" type="button" id="btnRefresh">Refresh</button>
-          <button class="ghost small" type="button" id="btnCsv">Download CSV</button>
+          <button class="ghost small" type="button" id="btnRefresh" data-icon="refresh" data-icon-size="16">Refresh</button>
+          <button class="ghost small" type="button" id="btnCsv" data-icon="download" data-icon-size="16">Download CSV</button>
         </div>
       </div>
-      <div id="stats" class="row" style="margin-bottom:12px"></div>
-      <div style="overflow-x:auto">
+      <div id="stats" class="kpis" style="margin-bottom:14px"></div>
+      <div class="table-wrap">
         <table id="table">
           <thead></thead>
           <tbody></tbody>
@@ -72,9 +96,22 @@
       </div>
       <p class="tiny hidden" id="emptyNote"></p>
     </div>
+
+    <footer class="foot">
+      <span class="foot-marks">
+        <img class="foot-mark foot-google" src="/brand/google-wordmark.png" alt="Google" width="73" height="24">
+        <img class="foot-mark foot-gemini" src="/brand/gemini-wordmark.png" alt="Gemini" width="66" height="24">
+      </span>
+      <span class="foot-text">
+        Certificate Station &mdash; the organiser's console for the Google Student Ambassador Program.
+        Every submission is approved by hand, so the certificate means something.
+      </span>
+    </footer>
   </section>
 
 </div>
+
+<script src="/icons.js"></script>
 <script src="/admin.js"></script>
 </body>
 </html>

@@ -658,6 +658,25 @@ test('paths outside the public folder and unknown routes are refused', async () 
     const styles = await fetch(base + '/styles.css');
     assert.equal(styles.status, 200);
     assert.match(styles.headers.get('content-type'), /text\/css/);
+
+    // The brand marks ship with the app: a page that references them and a
+    // deploy that drops them is a page of broken images.
+    for (const asset of [
+      '/brand/google-g-64.png',
+      '/brand/gemini-sparkle.png',
+      '/brand/gemini-wordmark.png',
+      '/brand/favicon-32.png',
+      '/icons.js',
+    ]) {
+      const res = await fetch(base + asset);
+      assert.equal(res.status, 200, `${asset} is served`);
+      const body = Buffer.from(await res.arrayBuffer());
+      assert.ok(body.length > 500, `${asset} is not an empty file`);
+    }
+
+    const page = await (await fetch(base + '/')).text();
+    assert.match(page, /brand\/google-g-64\.png/, 'the page carries the Google mark');
+    assert.match(page, /brand\/gemini-sparkle\.png/, 'the page carries the Gemini mark');
   });
 });
 

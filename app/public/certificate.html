@@ -4,20 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Your certificate</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+<div class="accent-strip" aria-hidden="true"></div>
+
+<header class="appbar">
+  <a class="brand" href="/" aria-label="Back to the certificate station">
+    <img class="brand-google" src="/brand/google-g-64.png" alt="Google" width="26" height="26">
+    <span class="brand-rule" aria-hidden="true"></span>
+    <img class="brand-sparkle" src="/brand/gemini-sparkle.png" alt="Gemini" width="24" height="24">
+    <span class="brand-text">
+      <strong>Your certificate</strong>
+      <span id="certStatus">Preparing...</span>
+    </span>
+  </a>
+  <div class="appbar-actions">
+    <a class="plain-link" href="/">Back</a>
+  </div>
+</header>
+
 <div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <div class="dot"></div>
-      <div>
-        <strong>Your certificate</strong>
-        <span id="certStatus">Preparing...</span>
-      </div>
-    </div>
-    <a href="/" class="row"><button class="ghost small" type="button">Back</button></a>
-  </header>
 
   <div id="certMsg" class="banner hidden"></div>
 
@@ -26,7 +36,7 @@
   </div>
 
   <div class="row" style="margin-bottom:12px">
-    <button class="primary" id="btnDownload" type="button" disabled>Download certificate</button>
+    <button class="primary" id="btnDownload" type="button" disabled data-icon="download" data-icon-size="16">Download certificate</button>
     <span class="tiny" id="certMeta"></span>
   </div>
 
@@ -35,6 +45,7 @@
     wrong, tell the organiser rather than editing it yourself.
   </p>
 </div>
+<script src="/icons.js"></script>
 <script src="/cert-render.js"></script>
 <script src="/cert.js"></script>
 </body>

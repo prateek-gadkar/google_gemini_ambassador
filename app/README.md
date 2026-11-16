@@ -9,6 +9,27 @@ Zero dependencies. One Node process. No database server.
 
 ---
 
+## The look
+
+It is meant to feel like a Google product rather than a side project: a
+`#f8f9fa` page, white cards on a single hairline, `#1a73e8` for the one action
+that matters, and the four brand colours used only where they carry meaning —
+green approved, amber waiting, red rejected. The official Google and Gemini
+marks sit in the app bar, the footer and the tab icon; the icons on buttons and
+status pills are inline SVG, so nothing depends on a CDN or a webfont.
+
+| Where | What |
+| --- | --- |
+| App bar | Google G, then the Gemini sparkle, then the page name |
+| Footer | Google wordmark, Gemini wordmark, and a slot for the programme lockup |
+| Status | `check_circle` approved · `schedule` waiting · `cancel` rejected |
+| `app/public/brand/` | every image, plus the Drive IDs and how to swap one in |
+
+Brand assets are served from `/brand/…` by the app itself. `brand/README.md`
+lists each file and where the original lives in Drive.
+
+---
+
 ## The one rule this was built around
 
 **Nothing on the certificate is invented.** The official artwork carries every
