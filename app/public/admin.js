@@ -129,11 +129,25 @@ function setTask(studentId, taskKey, status) {
 function render(data) {
   renderTemplate(data.cert);
 
+  // Every approval is a decision here, so the number waiting on you belongs at
+  // the top of the page, not buried in the rows.
+  var pending = 0;
+  data.students.forEach(function (student) {
+    (student.tasks || []).forEach(function (task) {
+      if (task.status === 'submitted') pending += 1;
+    });
+  });
+
   var stats = $('stats');
   stats.innerHTML = '';
   stats.appendChild(el('span', { class: 'pill', text: data.stats.total + ' registered' }));
   stats.appendChild(el('span', { class: 'pill done', text: data.stats.unlocked + ' unlocked' }));
   stats.appendChild(el('span', { class: 'pill done', text: data.stats.issued + ' issued' }));
+  if (pending) {
+    stats.appendChild(
+      el('span', { class: 'pill pending', text: pending + ' awaiting your approval' })
+    );
+  }
 
   var head = $('table').querySelector('thead');
   var body = $('table').querySelector('tbody');
@@ -153,7 +167,18 @@ function render(data) {
     $('emptyNote').classList.add('hidden');
   }
 
-  data.students.forEach(function (student) {
+  var waitingOnMe = function (student) {
+    var waiting = (student.tasks || []).some(function (task) {
+      return task.status === 'submitted';
+    });
+    return waiting ? 0 : 1;
+  };
+  var ordered = data.students.slice().sort(function (a, b) {
+    var byPending = waitingOnMe(a) - waitingOnMe(b);
+    return byPending !== 0 ? byPending : String(a.name).localeCompare(String(b.name));
+  });
+
+  ordered.forEach(function (student) {
     var who = el('td', null, [
       el('div', { text: student.name }),
       el('div', { class: 'tiny', text: student.email }),
@@ -174,7 +199,13 @@ function render(data) {
         class: 'pill ' + (student.unlocked ? 'done' : ''),
         text: student.unlocked ? 'unlocked' : 'locked',
       }),
-      student.missing.length
+      (student.waitingFor || []).length
+        ? el('div', {
+            class: 'tiny',
+            style: 'margin-top:4px',
+            text: 'awaiting approval: ' + student.waitingFor.join(', '),
+          })
+        : student.missing.length
         ? el('div', { class: 'tiny', style: 'margin-top:4px', text: 'missing: ' + student.missing.join(', ') })
         : null,
     ]);

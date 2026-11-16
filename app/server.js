@@ -55,6 +55,17 @@ function taskStatus(student, key) {
 }
 
 /**
+ * The words on the button that opens a form: "Open the pre-survey form".
+ * Derived from the label so the link and its description cannot drift apart.
+ */
+function formLinkLabel(task) {
+  const label = String(task.label || '').trim();
+  if (!label) return 'Open the form';
+  if (/^open\b/i.test(label)) return label;
+  return `Open the ${label.charAt(0).toLowerCase()}${label.slice(1)}`;
+}
+
+/**
  * A task counts as satisfied when its receipt is verified, or when receipts
  * auto-verify and one has been submitted. Rejection always wins.
  */
@@ -69,6 +80,8 @@ function isSatisfied(student, task) {
 export function evaluate(student) {
   const tasks = CONFIG.tasks.map((task) => {
     const entry = student.tasks?.[task.key] || {};
+    const status = entry.status || 'empty';
+    const satisfied = isSatisfied(student, task);
     return {
       key: task.key,
       label: task.label,
@@ -76,15 +89,22 @@ export function evaluate(student) {
       formUrl: task.formUrl || '',
       required: !!task.required,
       proofRequired: !!task.proofRequired,
-      status: entry.status || 'empty',
+      status,
       receipt: entry.receipt || '',
       hasProof: !!entry.proofFile,
       at: entry.at || null,
-      satisfied: isSatisfied(student, task),
+      satisfied,
+      // Submitted, but the organiser has not approved it yet. Worth saying out
+      // loud: otherwise "still required" reads as "you never did it".
+      waiting: !satisfied && status === 'submitted',
     };
   });
   const missing = tasks.filter((t) => t.required && !t.satisfied).map((t) => t.label);
-  return { tasks, missing, unlocked: missing.length === 0 };
+  const waitingFor = tasks.filter((t) => t.required && t.waiting).map((t) => t.label);
+  const untouched = tasks
+    .filter((t) => t.required && !t.satisfied && !t.waiting)
+    .map((t) => t.label);
+  return { tasks, missing, waitingFor, untouched, unlocked: missing.length === 0 };
 }
 
 function publicStudent(student) {
@@ -95,8 +115,12 @@ function publicStudent(student) {
     email: student.email,
     campus: student.campus || '',
     createdAt: student.createdAt,
-    tasks: gate.tasks.map(({ satisfied, ...rest }) => ({ ...rest, satisfied })),
+    tasks: gate.tasks.map((t) => ({ ...t, formLabel: formLinkLabel(t) })),
     missing: gate.missing,
+    // The student page says "submitted, waiting" rather than "still required",
+    // so it needs both lists, not just the one.
+    waitingFor: gate.waitingFor,
+    untouched: gate.untouched,
     unlocked: gate.unlocked,
     cert: student.cert || null,
   };
@@ -405,11 +429,13 @@ export async function createServer(options = {}) {
         signedIn: !!student,
         student: student ? publicStudent(student) : null,
         cert: certView(store),
+        approvalRequired: !CONFIG.autoVerifyReceipts,
         tasks: CONFIG.tasks.map((t) => ({
           key: t.key,
           label: t.label,
           hint: t.hint || '',
           formUrl: t.formUrl || '',
+          formLabel: formLinkLabel(t),
           required: !!t.required,
         })),
         site: { name: CONFIG.siteName, tagline: CONFIG.tagline },
@@ -562,6 +588,8 @@ export async function createServer(options = {}) {
               })),
               unlocked: gate.unlocked,
               missing: gate.missing,
+              waitingFor: gate.waitingFor,
+              untouched: gate.untouched,
               cert: s.cert || null,
             };
           })

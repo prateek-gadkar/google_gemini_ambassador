@@ -58,6 +58,22 @@ async function withServer(fn) {
 
 const adminHeaders = { 'x-admin-key': ADMIN_KEY };
 
+/**
+ * Approving each entry is an admin act now, not a side effect of submitting, so
+ * every test that needs an unlocked student does it the way the organiser will
+ * on the day.
+ */
+async function approve(admin, studentId, keys = ['pre', 'post']) {
+  for (const key of keys) {
+    const res = await admin.request(`/api/admin/students/${studentId}/task`, {
+      method: 'POST',
+      headers: adminHeaders,
+      json: { key, status: 'verified' },
+    });
+    assert.equal(res.status, 200, `approving ${key}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 test('health check reports an empty, template-less install', async () => {
   await withServer(async ({ base }) => {
@@ -109,8 +125,8 @@ test('registration validates input and rejects duplicates', async () => {
   });
 });
 
-test('the certificate stays locked until every required task is submitted', async () => {
-  await withServer(async ({ base }) => {
+test('the certificate stays locked until every required task is approved', async () => {
+  await withServer(async ({ base, admin }) => {
     const client = makeClient(base);
     await client.request('/api/register', {
       method: 'POST',
@@ -142,8 +158,19 @@ test('the certificate stays locked until every required task is submitted', asyn
     assert.equal(pre.status, 200);
 
     me = await client.request('/api/me');
+    const studentId = me.body.student.id;
     assert.equal(me.body.student.unlocked, false, 'one of two tasks is not enough');
-    assert.deepEqual(me.body.student.missing, ['Post-survey form']);
+    assert.deepEqual(
+      me.body.student.missing,
+      ['Pre-survey form', 'Post-survey form'],
+      'a waiting entry still counts as missing until the organiser approves it'
+    );
+    assert.deepEqual(
+      me.body.student.waitingFor,
+      ['Pre-survey form'],
+      'a submitted receipt waits for approval instead of counting'
+    );
+    assert.deepEqual(me.body.student.untouched, ['Post-survey form']);
 
     const stillLocked = await client.request('/api/certificate/issue', {
       method: 'POST',
@@ -156,7 +183,16 @@ test('the certificate stays locked until every required task is submitted', asyn
       json: { receipt: 'https://forms.gle/posttest - submitted 11:52' },
     });
     assert.equal(post.status, 200);
-    assert.equal(post.body.student.unlocked, true);
+    assert.equal(post.body.student.unlocked, false, 'submitting is a claim, not a pass');
+    assert.deepEqual(post.body.student.waitingFor, ['Pre-survey form', 'Post-survey form']);
+    assert.deepEqual(post.body.student.untouched, []);
+
+    // The organiser approves both. Only then does the gate open.
+    await approve(admin, studentId);
+    me = await client.request('/api/me');
+    assert.equal(me.body.student.unlocked, true, 'approval is what unlocks');
+    assert.deepEqual(me.body.student.missing, []);
+    assert.deepEqual(me.body.student.waitingFor, []);
 
     // Unlocked, but the artwork is missing: still no certificate.
     const noTemplate = await client.request('/api/certificate/issue', {
@@ -192,6 +228,7 @@ test('the name typed at download must match the registration', async () => {
     });
     await client.request('/api/tasks/pre/receipt', { method: 'POST', json: { receipt: 'pre done' } });
     await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
+    await approve(admin, (await client.request('/api/me')).body.student.id);
 
     // Admin uploads artwork, then the signature, then enables downloads.
     const upload = await admin.request('/api/admin/template', {
@@ -267,6 +304,7 @@ test('admin actions require the key, and rejection re-locks the certificate', as
 
     await client.request('/api/tasks/pre/receipt', { method: 'POST', json: { receipt: 'pre done' } });
     await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
+    await approve(admin, studentId);
 
     await admin.request('/api/admin/template', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
     await admin.request('/api/admin/signature', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
@@ -396,6 +434,7 @@ test('artwork without a signature cannot be enabled, and issues nothing', async 
     });
     await client.request('/api/tasks/pre/receipt', { method: 'POST', json: { receipt: 'pre done' } });
     await client.request('/api/tasks/post/receipt', { method: 'POST', json: { receipt: 'post done' } });
+    await approve(admin, (await client.request('/api/me')).body.student.id);
 
     await admin.request('/api/admin/template', { method: 'POST', headers: adminHeaders, body: TINY_PNG });
 
@@ -513,7 +552,9 @@ test('a browser that refuses cookies still stays signed in', async () => {
       headers: { ...auth, 'content-type': 'application/json' },
       body: JSON.stringify({ receipt: 'post done' }),
     });
-    assert.equal((await post.json()).student.unlocked, true);
+    const postBody = await post.json();
+    assert.equal(postBody.student.unlocked, false, 'submitted, so waiting — the session is what matters here');
+    assert.equal(postBody.student.waitingFor.length, 2);
 
     // Sign in on a fresh "browser": token comes back again.
     const login = await fetch(base + '/api/login', {
@@ -527,7 +568,12 @@ test('a browser that refuses cookies still stays signed in', async () => {
       headers: { authorization: 'Bearer ' + loginBody.token },
     })).json();
     assert.equal(me2.signedIn, true);
-    assert.equal(me2.student.unlocked, true, 'task state survives the re-login');
+    assert.equal(me2.student.unlocked, false, 'both entries are still waiting for the organiser');
+    assert.deepEqual(
+      me2.student.tasks.filter((t) => t.status === 'submitted').map((t) => t.key),
+      ['pre', 'post'],
+      'task state survives the re-login'
+    );
   });
 });
 

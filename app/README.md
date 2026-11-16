@@ -100,8 +100,10 @@ The date always comes from the student's own clock at download time.
 the signature, then **Save and enable downloads**. Use **Download preview PNG**
 to check it at full resolution before students ever see it.
 
-Also paste the real survey links into `tasks[].formUrl` in `config.js`, so
-students get an "Open the form" link instead of hunting through the portal.
+The two real survey links are already in `tasks[].formUrl` in `config.js`
+(pre-survey and post-survey/feedback), and the button text comes from the task
+label, so every card opens its own form in a new tab — above the paste box,
+because filling the form in is the task and the box is only for its receipt.
 
 ---
 
@@ -109,10 +111,13 @@ students get an "Open the form" link instead of hunting through the portal.
 
 - A task is *required* when `required: true` in `config.js`. Default: pre-survey
   and post-survey.
-- Submitting a receipt marks it `submitted`. With `autoVerifyReceipts: true`
-  (the default) that is enough to unlock. You can still mark any receipt
-  `rejected`, which re-locks the certificate **and revokes an already-issued
-  one**.
+- Submitting a receipt marks it `submitted`. That is a claim, not a pass: with
+  `autoVerifyReceipts: false` (the default) the student sees "submitted,
+  waiting for the organiser" and the entry only counts once you press
+  **Verify** in `/admin`. Flip the setting to `true` if you would rather trust
+  every submission automatically.
+- Marking a receipt `rejected` re-locks the certificate **and revokes an
+  already-issued one**.
 - The download requires typing the registered name. Matching ignores case and
   extra spaces, but not spelling: `Ananya Sharmaa` is refused. The name printed
   is always the spelling from registration, never the typed one, so a typo
@@ -123,6 +128,11 @@ students get an "Open the form" link instead of hunting through the portal.
 `/admin` gives you, per student: name, email, campus, each task's status, the
 receipt text, any screenshot, unlock state, and certificate serial. You can
 verify, reject or reset any task, and download everything as CSV.
+
+Because approval is now a decision rather than a formality, the page works as a
+work queue: a pill at the top counts how many entries are **awaiting your
+approval**, and rows with something waiting sort to the top. Verify is the whole
+job — the certificate unlocks the moment the last required entry is approved.
 
 ## Where the data lives
 

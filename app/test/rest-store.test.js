@@ -240,8 +240,26 @@ test('the whole app works end to end on the serverless store', async () => {
         assert.equal(res.status, 200);
       }
 
+      // Nothing unlocks on its own any more: the organiser approves each entry.
+      const pending = await (await fetch(base + '/api/me', { headers: auth })).json();
+      assert.equal(pending.student.unlocked, false);
+      assert.deepEqual(pending.student.waitingFor, ['Pre-survey form', 'Post-survey form']);
+
+      const roster = await (
+        await fetch(base + '/api/admin/students', { headers: { 'x-admin-key': 'api-key' } })
+      ).json();
+      const studentId = roster.students[0].id;
+      for (const key of ['pre', 'post']) {
+        const approved = await fetch(`${base}/api/admin/students/${studentId}/task`, {
+          method: 'POST',
+          headers: { 'x-admin-key': 'api-key', 'content-type': 'application/json' },
+          body: JSON.stringify({ key, status: 'verified' }),
+        });
+        assert.equal(approved.status, 200, `approving ${key} across the store`);
+      }
+
       const unlocked = await (await fetch(base + '/api/me', { headers: auth })).json();
-      assert.equal(unlocked.student.unlocked, true);
+      assert.equal(unlocked.student.unlocked, true, 'approval is what unlocks');
 
       // The gate still holds for a different name.
       const wrong = await fetch(base + '/api/certificate/issue', {

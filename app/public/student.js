@@ -75,15 +75,24 @@ function setMsg(node, text, kind) {
 var STATUS_LABEL = {
   empty: 'not done',
   submitted: 'submitted',
-  verified: 'verified',
+  verified: 'approved',
   rejected: 'rejected',
 };
+
+// When the organiser approves each submission by hand, "submitted" is not the
+// end of the story and the student needs to see that.
+function statusText(status) {
+  if (status === 'submitted') {
+    return state.me && state.me.approvalRequired ? 'waiting for approval' : 'submitted';
+  }
+  return STATUS_LABEL[status] || status;
+}
 
 function statusPill(status) {
   var cls = 'pill';
   if (status === 'verified' || status === 'submitted') cls += status === 'verified' ? ' done' : ' pending';
   if (status === 'rejected') cls += ' rejected';
-  return el('span', { class: cls, text: STATUS_LABEL[status] || status });
+  return el('span', { class: cls, text: statusText(status) });
 }
 
 function render() {
@@ -101,20 +110,37 @@ function render() {
 
   var student = me.student;
   $('greeting').textContent = 'Hey ' + student.name.split(' ')[0];
-  $('subGreeting').textContent = student.missing.length
-    ? student.missing.length + ' task' + (student.missing.length > 1 ? 's' : '') +
-      ' left before your certificate unlocks.'
-    : 'All required tasks are done. Your certificate is ready.';
+  var waiting = student.waitingFor || [];
+  var untouched = student.untouched || [];
+  if (!student.missing.length) {
+    $('subGreeting').textContent = 'All required tasks are approved. Your certificate is ready.';
+  } else if (untouched.length) {
+    $('subGreeting').textContent =
+      untouched.length + ' task' + (untouched.length > 1 ? 's' : '') +
+      ' left before your certificate unlocks.';
+  } else {
+    $('subGreeting').textContent =
+      'Submitted. Waiting for the organiser to approve ' +
+      (waiting.length > 1 ? 'them' : 'it') + '.';
+  }
   $('footEmail').textContent = student.email;
   $('footName').textContent = student.name;
 
   var banner = $('gateBanner');
   if (student.unlocked) {
     banner.className = 'banner ok';
-    banner.textContent = 'Unlocked. Every required task is complete.';
+    banner.textContent = 'Unlocked. Every required task is approved.';
+  } else if (untouched.length) {
+    banner.className = 'banner warn';
+    var line = 'Locked. Still required: ' + untouched.join(', ') + '.';
+    if (waiting.length) line += ' Waiting for approval: ' + waiting.join(', ') + '.';
+    banner.textContent = line;
   } else {
     banner.className = 'banner warn';
-    banner.textContent = 'Locked. Still required: ' + student.missing.join(', ') + '.';
+    banner.textContent =
+      'Everything is submitted. The organiser approves each entry by hand — ' +
+      'your certificate unlocks as soon as ' +
+      (waiting.length > 1 ? 'they are' : 'it is') + ' approved. Keep this page open or check back.';
   }
 
   var list = $('taskList');
@@ -131,18 +157,26 @@ function render() {
     card.appendChild(head);
     if (task.hint) card.appendChild(el('p', { class: 'hint', text: task.hint }));
 
+    // The form comes first, because filling it in is the task. The box below is
+    // only for the confirmation it gives you.
     if (task.formUrl) {
       card.appendChild(
-        el('p', { style: 'margin:0 0 12px' }, [
+        el('p', { style: 'margin:0 0 10px' }, [
           el('a', {
             href: task.formUrl,
             target: '_blank',
             rel: 'noopener noreferrer',
-            class: 'tiny',
-            style: 'color:var(--accent)',
-            text: 'Open the form',
+            class: 'form-link',
+            text: (task.formLabel || 'Open the form') + ' \u2197',
           }),
         ])
+      );
+      card.appendChild(
+        el('p', {
+          class: 'tiny',
+          style: 'margin:0 0 10px',
+          text: 'Then paste the confirmation it shows you into the box below.',
+        })
       );
     }
 
@@ -178,7 +212,13 @@ function render() {
           body: { receipt: value },
         })
           .then(function () {
-            setMsg(msg, 'Saved.', 'ok');
+            setMsg(
+              msg,
+              state.me && state.me.approvalRequired
+                ? 'Sent. The organiser will approve it, then your certificate unlocks.'
+                : 'Saved.',
+              'ok'
+            );
             return refresh();
           })
           .catch(function (err) {

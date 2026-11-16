@@ -107,6 +107,21 @@ button:hover { border-color: #33455c; }
 button:active { transform: translateY(1px); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.primary { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+
+/* The form button: the task is filling the form in, so it should look like the
+   thing to do, not like a footnote. */
+a.form-link {
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: var(--accent-2);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  line-height: 1.2;
+}
+a.form-link:hover { background: #4479e0; text-decoration: none; }
 button.primary:hover { background: #4479e0; }
 button.ghost { background: transparent; }
 button.small { padding: 7px 11px; font-size: 12.5px; }
